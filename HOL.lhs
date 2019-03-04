@@ -4,6 +4,7 @@
 module HOL where
 
 import Data.Typeable
+import Prelude hiding (forall, exists)
 
 \end{code}
 Modelling HOL Types like:
@@ -16,63 +17,44 @@ $i :\$ i$ short $ii$ :: Function Type: Individual -> Individual
 $i :\$ (i :\$ i)$ short $i(ii)$ :: Function Type: (Individual -> Individual) -> Individual
 $i :\$ (o :\$ i)$ short $i(oi)$ :: Function Type: (Individual -> Bool) -> Individual
 \begin{code}
-infixl 5 :$
-infixl 5 :$$
-
 infixl 5 :@:, :&:
+infixl 4 .->
+infixl 5 .|
+infixl 6 .&
+infixl 7 .@
 
-data HOLType = I | O | HOLType :$ HOLType deriving (Eq, Ord)
-instance Show HOLType where
-  show I = "I"
-  show O = "O"
-  show (x :$ O) = show x ++ "O"
-  show (x :$ I) = show x ++ "I"
-  show (x :$ y) = show x ++ "(" ++ show y ++ ")"
+class HOLTyped t where
+  getHOLType :: t -> TypeRep
 
-\end{code}
-Mapping a Type to a recursive GADT-representation of the type.
-"HOLTypeRep t" GADT representation of "HOLType".
-
-The trick lies in:
-  "class HOLTyped (t :: HOLType) where"
-  "  getHOLType :: proxy t -> HOLTypeRep t"
-which allows, to map ANY type paramerized with "t" to its GADT representation "HOLTypeRep t".
-\begin{code}
-data HOLTypeRep (t :: HOLType) where
-  RI :: HOLTypeRep I
-  RO :: HOLTypeRep O
-  (:$$) :: HOLTypeRep t -> HOLTypeRep s -> HOLTypeRep (t :$ s)
-instance Show (HOLTypeRep t) where
-  show RI = "I"
-  show RO = "O"
-  show (t :$$ RO) = show t ++ "O"
-  show (t :$$ RI) = show t ++ "I"
-  show (t :$$ s) = show t ++ "(" ++ show s ++ ")"
-
-class HOLTyped (t :: HOLType) where
-  getHOLType :: proxy t -> HOLTypeRep t
-instance HOLTyped I where
-  getHOLType _ = RI
-instance HOLTyped O where
-  getHOLType _ = RO
-instance (HOLTyped s, HOLTyped t) => HOLTyped (t :$ s) where
-  getHOLType _ = (getHOLType undefined) :$$ (getHOLType undefined)
+instance Typeable t => HOLTyped (HOLVar t) where
+  getHOLType = head . typeRepArgs . typeOf
+instance Typeable t => HOLTyped (HOLTerm t) where
+  getHOLType = head . typeRepArgs . typeOf
+instance Typeable t => HOLTyped (HOLDef t) where
+  getHOLType = head . typeRepArgs . typeOf
 \end{code}
 
 \begin{code}
-data HOLVar (t :: HOLType) where
+data HOLVar t where
   HOLVar :: String -> HOLVar t 
 
-data HOLTerm (t :: HOLType) where
-  T :: HOLTerm O
-  F :: HOLTerm O
-  Var :: HOLVar t -> HOLTerm t
-  Not :: HOLTerm O -> HOLTerm O
-  (:&:) :: HOLTerm O -> HOLTerm O -> HOLTerm O
-  (:|:) :: HOLTerm O -> HOLTerm O -> HOLTerm O
-  (:->:) :: HOLTerm O -> HOLTerm O -> HOLTerm O
-  Lam :: HOLVar s -> HOLTerm t -> HOLTerm (t :$ s)
-  (:@:) :: HOLTerm (t :$ s) -> HOLTerm s -> HOLTerm t
+data HOLTerm t where
+  T :: HOLTerm Bool
+  F :: HOLTerm Bool
+  Var :: Typeable t => HOLVar t -> HOLTerm t
+  Not :: HOLTerm Bool -> HOLTerm Bool
+  (:&:) :: HOLTerm Bool -> HOLTerm Bool -> HOLTerm Bool
+  (:|:) :: HOLTerm Bool -> HOLTerm Bool -> HOLTerm Bool
+  (:->:) :: HOLTerm Bool -> HOLTerm Bool -> HOLTerm Bool
+  Lam :: (Typeable s, Typeable t) => HOLVar s -> HOLTerm t -> HOLTerm (s -> t)
+  (:@:) :: (Typeable s, Typeable t) => HOLTerm (s -> t) -> HOLTerm s -> HOLTerm t
+  Forall :: Typeable s => HOLVar s -> HOLTerm Bool -> HOLTerm Bool
+  Exists :: Typeable s => HOLVar s -> HOLTerm Bool -> HOLTerm Bool
+  Def :: Typeable t => HOLDef t -> HOLTerm t
+
+data HOLDef t where
+  HOLDef :: String -> HOLTerm t -> HOLDef t
+  HOLConj :: String -> HOLTerm Bool -> HOLDef Bool
 
 instance Show (HOLVar t) where
   show (HOLVar x) = x
@@ -86,19 +68,25 @@ instance Show (HOLTerm t) where
     (a :&: b) -> "(" ++ (show a) ++ " & " ++ (show b) ++ ")"
     (a :|: b) -> "(" ++ (show a) ++ " | " ++ (show b) ++ ")"
     (a :->: b) -> "(" ++ (show a) ++ " -> " ++ (show b) ++ ")"
-    (Lam v a) -> "\\" ++ (show v) ++ ": " ++ (show a)
-    (f :@: x) -> (show f) ++ "@" ++ (show x) 
+    (Lam v a) -> "\\" ++ (show v) ++ ". " ++ (show a)
+    (f :@: x) -> "(" ++ (show f) ++ "@" ++ (show x) ++ ")"
+    (Forall x f) -> "∀" ++ (show x) ++ ":" ++ (show f) 
+    (Exists x f) -> "∃" ++ (show x) ++ ":" ++ (show f)
+    (Def (HOLDef name _)) -> name
+    (Def (HOLConj name _)) -> name
 
 \end{code}
 
 Conversion from and to HOL-Terms.
 \begin{code}
 class ToHOL a where
-  toHOL :: forall (t :: HOLType). a t -> HOLTerm t
+  toHOL :: forall t. Typeable t => a t -> HOLTerm t
 instance ToHOL HOLVar where
   toHOL = Var
 instance ToHOL HOLTerm where
   toHOL = id
+instance ToHOL HOLDef where
+  toHOL = Def
 class FromHOL a where
   fromHOL :: HOLTerm t -> a t
 instance FromHOL HOLTerm where
@@ -115,17 +103,30 @@ a .& b = (toHOL a) :&: (toHOL b)
 a .| b = (toHOL a) :|: (toHOL b)
 a .-> b = (toHOL a) :->: (toHOL b)
 f .@ x = (toHOL f) :@: (toHOL x)
+app f = (.@) f
 lam v a = Lam v (toHOL a)
+forall x f = Forall x (toHOL f)
+exists x f = Exists x (toHOL f)
+definition s f = HOLDef s f
+conjecture s f = HOLConj s f
+
+def (Def (HOLDef _ f)) = f
+def (Def (HOLConj _ f)) = f
+name (Def (HOLDef n _)) = n
+name (Def (HOLConj n _)) = n
+name (Var (HOLVar n)) = n
 \end{code}
 
 Examples
-\begin{code}  
-x :: HOLVar O
-x = HOLVar "x"
 
-y :: HOLVar I
-y = HOLVar "y"
+x = HOLVar "x" :: HOLVar Bool
+y = HOLVar "y" :: HOLVar Int
 
-f :: HOLVar (O :$ I)
-f = HOLVar "f"
-\end{code}
+g0 = HOLVar "g" :: HOLVar (Bool -> Bool)
+h0 = HOLVar "h" :: HOLVar (Int -> Int)
+
+f0 = HOLVar "f" :: HOLVar (Int -> Bool)
+f1 = HOLVar "f" :: HOLVar (Int -> Int -> Bool)
+
+ax0 :: (ToHOL a2, ToHOL a1) => a1 (s -> t) -> a2 s -> HOLTerm t
+ax0 = \f x -> f .@ x
