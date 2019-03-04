@@ -36,7 +36,7 @@ instance Typeable t => HOLTyped (HOLDef t) where
 
 \begin{code}
 data HOLVar t where
-  HOLVar :: String -> HOLVar t 
+  HOLVar :: String -> HOLVar t
 
 data HOLTerm t where
   T :: HOLTerm Bool
@@ -52,9 +52,22 @@ data HOLTerm t where
   Exists :: Typeable s => HOLVar s -> HOLTerm Bool -> HOLTerm Bool
   Def :: Typeable t => HOLDef t -> HOLTerm t
 
+
 data HOLDef t where
   HOLDef :: String -> HOLTerm t -> HOLDef t
   HOLConj :: String -> HOLTerm Bool -> HOLDef Bool
+  HOLConst :: HOLVar t -> HOLDef t
+
+instance Show (HOLDef t) where
+  show (HOLDef name t) = "Def: " ++ name ++ " = " ++ (show t)
+  show (HOLConj name t) = "Conj: " ++ name ++ " = " ++ (show t)
+  show (HOLConst v) = "Const: " ++ (show v)
+
+-- for generic lists:
+data SomeHOLDef where
+  SomeHOLDef :: (Typeable t) => !(HOLDef t) -> SomeHOLDef
+gen :: (Typeable t) => (HOLDef t) -> SomeHOLDef
+gen = SomeHOLDef
 
 instance Show (HOLVar t) where
   show (HOLVar x) = x
@@ -74,6 +87,7 @@ instance Show (HOLTerm t) where
     (Exists x f) -> "∃" ++ (show x) ++ ":" ++ (show f)
     (Def (HOLDef name _)) -> name
     (Def (HOLConj name _)) -> name
+    (Def (HOLConst a)) -> show a
 
 \end{code}
 
@@ -109,6 +123,7 @@ forall x f = Forall x (toHOL f)
 exists x f = Exists x (toHOL f)
 definition s f = HOLDef s f
 conjecture s f = HOLConj s f
+constant f = HOLConst f
 
 def (Def (HOLDef _ f)) = f
 def (Def (HOLConj _ f)) = f
