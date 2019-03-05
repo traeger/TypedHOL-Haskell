@@ -21,7 +21,10 @@ toTHF cst = case cst of
 toTHFConjecture :: Typeable u => HOLTerm Bool u -> [String]
 toTHFConjecture term = 
   ["thf(conj,conjecture,(" ++ (toTHFTerm term) ++ "))."]
+\end{code}
 
+TODO: Lookup the TPTP syntax definition to use the explicit Haskell types in TPTP instead of "$o", "$i".
+\begin{code}
 toTHFType :: (Typeable t, Typeable u) => HOLTerm t u -> String
 toTHFType term = toTHFType' $ getHOLType term where
   toTHFType' x = case splitTyConApp x of
@@ -34,20 +37,23 @@ toTHFVarName :: HOLVar t u -> String
 toTHFVarName (HOLVar name) = case name of
   (x:xs) -> (Char.toUpper x):xs
 
--- TPTP constant need to be lower case
+-- TPTP constants need to be lower case
 toTHFConstName :: HOLConst t u -> String
 toTHFConstName (HOLConst name) = case name of
   (x:xs) -> (Char.toLower x):xs
 
---  toTHFType' (Fun a b) = (toTHFType' a) ++ " > " ++ (toTHFType' b)
+\end{code}
 
+TODO: Use a better ShowS implementation to remove unnessesary "()".
+TODO: introduce TPTP choice? How to model this in Haskell?
+\begin{code}
 toTHFTerm :: (Typeable t, Typeable u) => HOLTerm t u -> String
 toTHFTerm term = case term of
   T -> "$true"
   F -> "$false"
   Var v -> toTHFVarName v
   Const c -> toTHFConstName c
-  Not a -> "" ++ (toTHFTerm a) -- TODO: figure out what not is
+  Not a -> "" ++ (toTHFTerm a) -- TODO: figure out what not in TPTP is
   And a b -> "(" ++ (toTHFTerm a) ++ "&" ++ (toTHFTerm b) ++ ")"
   Or a b -> "(" ++ (toTHFTerm a) ++ "|" ++ (toTHFTerm b) ++ ")"
   Imply a b -> "(" ++ (toTHFTerm a) ++ "=>" ++ (toTHFTerm b) ++ ")"

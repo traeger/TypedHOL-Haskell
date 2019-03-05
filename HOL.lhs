@@ -61,6 +61,10 @@ instance Show (HOLConst t u) where
   show (HOLUninterpreted x) = ""
   show (HOLDef name x) = name ++ ": " ++ (show x)
 
+\end{code}
+
+TODO: Use a better ShowS implementation to remove unnessesary "()".
+\begin{code}
 instance Show (HOLTerm t u) where
   show x = case x of
     T -> "T"
