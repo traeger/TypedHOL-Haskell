@@ -55,22 +55,21 @@ import Prelude hiding (forall, exists)
 
 leibeq =
   let
-    x = HOLVar "X" :: HOLVar (Bool)
-    y = HOLVar "Y" :: HOLVar (Bool)
-    p = HOLVar "P" :: HOLVar (Bool -> Bool) 
+    x = HOLVar "x" :: HOLVar (Bool)
+    y = HOLVar "y" :: HOLVar (Bool)
+    p = HOLVar "p" :: HOLVar (Bool -> Bool) 
   in
     definition "leibeq" $ lam x $ lam y $ exists p $ p .@ x .-> p .@ y
 
-h = constant (HOLVar "h" :: HOLVar (Bool -> Bool))
+h = constant (HOLConst "h" :: HOLConst (Bool -> Bool))
 
-conj = conjecture "conj" $ ( leibeq .@ ( h .@ ( leibeq .@ ( h .@ T ) .@ (h .@ F ) ) ) .@ (h .@ F) )
+conj = leibeq .@ ( h .@ ( leibeq .@ ( h .@ T ) .@ (h .@ F ) ) ) .@ (h .@ F)
 
 problem = 
   [ gen h
-  , gen leibeq 
-  , gen conj
+  , gen leibeq
   ]
 
-g = toTPTP problem
+g = toTPTP problem conj
 f = valid problem
 \end{code}

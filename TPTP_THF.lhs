@@ -11,13 +11,15 @@ import qualified Data.Char as Char
 import Prelude hiding (forall, exists)
 
 toTHF :: Typeable t => HOLDef t -> [String]
-toTHF (HOLDef name term) = 
+toTHF (HOLDefTerm name term) = 
   ["thf(" ++ name ++ "_decl,type,(" ++ name ++ ":" ++ (toTHFType term) ++ "))."
   ,"thf(" ++ name ++ ",definition,(" ++ name ++ "=(" ++ (toTHFTerm term) ++ ")))."]
-toTHF (HOLConj name term) = 
-  ["thf(" ++ name ++ ",conjecture,(" ++ name ++ "=(" ++ (toTHFTerm term) ++ ")))."]
-toTHF (HOLConst var) = 
-  ["thf(" ++ (toTHFVarName var) ++ ",type,(" ++ (toTHFVarName var) ++ ":" ++ (toTHFType $ Var var) ++ "))."]
+toTHF (HOLDefConst cst) = 
+  ["thf(" ++ (toTHFConstName cst) ++ ",type,(" ++ (toTHFConstName cst) ++ ":" ++ (toTHFType $ Const cst) ++ "))."]
+
+toTHFConjecture :: HOLTerm Bool -> [String]
+toTHFConjecture term = 
+  ["thf(conj,conjecture,(conj=(" ++ (toTHFTerm term) ++ ")))."]
 
 toTHFType :: Typeable t => HOLTerm t -> String
 toTHFType term = toTHFType' $ getHOLType term where
@@ -28,7 +30,13 @@ toTHFType term = toTHFType' $ getHOLType term where
 
 -- TPTP vars need to be upper case
 toTHFVarName :: HOLVar t -> String
-toTHFVarName (HOLVar name) = name
+toTHFVarName (HOLVar name) = case name of
+  (x:xs) -> (Char.toUpper x):xs
+
+-- TPTP constant need to be lower case
+toTHFConstName :: HOLConst t -> String
+toTHFConstName (HOLConst name) = case name of
+  (x:xs) -> (Char.toLower x):xs
 
 --  toTHFType' (Fun a b) = (toTHFType' a) ++ " > " ++ (toTHFType' b)
 
@@ -36,7 +44,8 @@ toTHFTerm :: Typeable t => HOLTerm t -> String
 toTHFTerm term = case term of
   T -> "$true"
   F -> "$false"
-  Var x -> toTHFVarName x
+  Var v -> toTHFVarName v
+  Const c -> toTHFConstName c
   Not a -> "" ++ (toTHFTerm a) -- TODO: figure out what not is
   a :&: b -> "(" ++ (toTHFTerm a) ++ "&" ++ (toTHFTerm b) ++ ")"
   a :|: b -> "(" ++ (toTHFTerm a) ++ "|" ++ (toTHFTerm b) ++ ")"
@@ -45,10 +54,11 @@ toTHFTerm term = case term of
   a :@: x -> "(" ++ (toTHFTerm a) ++ "@" ++ (toTHFTerm x) ++ ")"
   Forall x a -> "( ![" ++ (toTHFVarName x) ++ ": " ++ (toTHFType $ Var x) ++ "]: " ++ (toTHFTerm a) ++ " )"
   Exists x a -> "( ![" ++ (toTHFVarName x) ++ ": " ++ (toTHFType $ Var x) ++ "]: " ++ (toTHFTerm a) ++ " )" -- TODO: figure out what not is
-  Def a -> name $ Def a
 
-toTPTP :: [SomeHOLDef] -> [String]
-toTPTP defs = concat $ map (\(SomeHOLDef a) -> toTHF a) defs
+toTPTP :: [SomeHOLDef] -> HOLTerm Bool -> [String]
+toTPTP defs conj = tptp_defs ++ tptp_conj where
+  tptp_conj = toTHFConjecture conj
+  tptp_defs = concat $ map (\(SomeHOLDef a) -> toTHF a) defs
 
 valid :: [SomeHOLDef] -> Bool
 valid _ = True

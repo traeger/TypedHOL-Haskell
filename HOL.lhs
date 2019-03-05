@@ -38,10 +38,14 @@ instance Typeable t => HOLTyped (HOLDef t) where
 data HOLVar t where
   HOLVar :: String -> HOLVar t
 
+data HOLConst t where
+  HOLConst :: String -> HOLConst t
+
 data HOLTerm t where
   T :: HOLTerm Bool
   F :: HOLTerm Bool
   Var :: Typeable t => HOLVar t -> HOLTerm t
+  Const :: Typeable t => HOLConst t -> HOLTerm t
   Not :: HOLTerm Bool -> HOLTerm Bool
   (:&:) :: HOLTerm Bool -> HOLTerm Bool -> HOLTerm Bool
   (:|:) :: HOLTerm Bool -> HOLTerm Bool -> HOLTerm Bool
@@ -50,18 +54,14 @@ data HOLTerm t where
   (:@:) :: (Typeable s, Typeable t) => HOLTerm (s -> t) -> HOLTerm s -> HOLTerm t
   Forall :: Typeable s => HOLVar s -> HOLTerm Bool -> HOLTerm Bool
   Exists :: Typeable s => HOLVar s -> HOLTerm Bool -> HOLTerm Bool
-  Def :: Typeable t => HOLDef t -> HOLTerm t
-
 
 data HOLDef t where
-  HOLDef :: String -> HOLTerm t -> HOLDef t
-  HOLConj :: String -> HOLTerm Bool -> HOLDef Bool
-  HOLConst :: HOLVar t -> HOLDef t
+  HOLDefTerm :: String -> HOLTerm t -> HOLDef t
+  HOLDefConst :: HOLConst t -> HOLDef t
 
 instance Show (HOLDef t) where
-  show (HOLDef name t) = "Def: " ++ name ++ " = " ++ (show t)
-  show (HOLConj name t) = "Conj: " ++ name ++ " = " ++ (show t)
-  show (HOLConst v) = "Const: " ++ (show v)
+  show (HOLDefTerm name t) = "Def: " ++ name ++ " = " ++ (show t)
+  show (HOLDefConst v) = "Const: " ++ (show v)
 
 -- for generic lists:
 data SomeHOLDef where
@@ -72,11 +72,15 @@ gen = SomeHOLDef
 instance Show (HOLVar t) where
   show (HOLVar x) = x
 
+instance Show (HOLConst t) where
+  show (HOLConst x) = x
+
 instance Show (HOLTerm t) where
   show x = case x of
     T -> "T"
     F -> "F"
     (Var var) -> show var
+    (Const cst) -> show cst
     (Not a) -> "(not " ++ "a" ++ ")"
     (a :&: b) -> "(" ++ (show a) ++ " & " ++ (show b) ++ ")"
     (a :|: b) -> "(" ++ (show a) ++ " | " ++ (show b) ++ ")"
@@ -85,9 +89,6 @@ instance Show (HOLTerm t) where
     (f :@: x) -> "(" ++ (show f) ++ "@" ++ (show x) ++ ")"
     (Forall x f) -> "∀" ++ (show x) ++ ":" ++ (show f) 
     (Exists x f) -> "∃" ++ (show x) ++ ":" ++ (show f)
-    (Def (HOLDef name _)) -> name
-    (Def (HOLConj name _)) -> name
-    (Def (HOLConst a)) -> show a
 
 \end{code}
 
@@ -97,10 +98,13 @@ class ToHOL a where
   toHOL :: forall t. Typeable t => a t -> HOLTerm t
 instance ToHOL HOLVar where
   toHOL = Var
+instance ToHOL HOLConst where
+  toHOL = Const
 instance ToHOL HOLTerm where
   toHOL = id
 instance ToHOL HOLDef where
-  toHOL = Def
+  toHOL (HOLDefTerm name t) = Const $ HOLConst name -- enforce type of t, make it a const
+  toHOL (HOLDefConst cst) = Const $ cst -- make it a const
 class FromHOL a where
   fromHOL :: HOLTerm t -> a t
 instance FromHOL HOLTerm where
@@ -121,15 +125,12 @@ app f = (.@) f
 lam v a = Lam v (toHOL a)
 forall x f = Forall x (toHOL f)
 exists x f = Exists x (toHOL f)
-definition s f = HOLDef s f
-conjecture s f = HOLConj s f
-constant f = HOLConst f
+definition s f = HOLDefTerm s f
+constant cst = HOLDefConst cst
 
-def (Def (HOLDef _ f)) = f
-def (Def (HOLConj _ f)) = f
-name (Def (HOLDef n _)) = n
-name (Def (HOLConj n _)) = n
-name (Var (HOLVar n)) = n
+def (HOLDefTerm _ f) = f
+name (HOLDefTerm n _) = n
+name (HOLDefConst (HOLConst n)) = n
 \end{code}
 
 Examples
