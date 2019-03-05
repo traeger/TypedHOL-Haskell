@@ -1,5 +1,5 @@
 \begin{code}
-{-# LANGUAGE TypeOperators, GADTs, KindSignatures, ScopedTypeVariables, ConstraintKinds #-}
+{-# LANGUAGE GADTs, KindSignatures, ScopedTypeVariables, ConstraintKinds, MultiParamTypeClasses, FlexibleInstances, FlexibleContexts #-}
 
 module HOL where
 
@@ -7,23 +7,18 @@ import Data.Typeable
 import Prelude hiding (forall, exists)
 import qualified Data.Functor.Const as FC
 
-\end{code}
-Modelling HOL Types like:
-
-$o$ :: Literal Bool Type
-$i$ :: Literal Individual Type
-$o :\$ o$ short $oo$ :: Function Type: Bool -> Bool
-$o :\$ i :\$ i$ short $oii$ :: Function Type: Individual -> Individual -> Bool
-$i :\$ i$ short $ii$ :: Function Type: Individual -> Individual
-$i :\$ (i :\$ i)$ short $i(ii)$ :: Function Type: (Individual -> Individual) -> Individual
-$i :\$ (o :\$ i)$ short $i(oi)$ :: Function Type: (Individual -> Bool) -> Individual
-\begin{code}
-infixl 5 :@:, :&:
 infixl 4 .->
 infixl 5 .|
 infixl 6 .&
 infixl 7 .@
+\end{code}
 
+Definition of HOL
+* Variables - HOLVar t u
+* Constants - HOLConst t u
+* Terms - HOLTerm t u
+of type "t" and uninterpreted term wrapper "u".
+\begin{code}
 class HOLTyped t where
   getHOLType :: t -> TypeRep
 
@@ -50,11 +45,11 @@ data HOLTerm t u where
   Var :: (Typeable t, Typeable u) => HOLVar t u -> HOLTerm t u
   Const :: (Typeable t, Typeable u) => HOLConst t u -> HOLTerm t u
   Not :: Typeable u => HOLTerm Bool u -> HOLTerm Bool u
-  (:&:) :: Typeable u => HOLTerm Bool u -> HOLTerm Bool u -> HOLTerm Bool u
-  (:|:) :: Typeable u => HOLTerm Bool u -> HOLTerm Bool u -> HOLTerm Bool u
-  (:->:) :: Typeable u => HOLTerm Bool u -> HOLTerm Bool u -> HOLTerm Bool u
+  And :: Typeable u => HOLTerm Bool u -> HOLTerm Bool u -> HOLTerm Bool u
+  Or :: Typeable u => HOLTerm Bool u -> HOLTerm Bool u -> HOLTerm Bool u
+  Imply :: Typeable u => HOLTerm Bool u -> HOLTerm Bool u -> HOLTerm Bool u
   Lam :: (Typeable s, Typeable t, Typeable u) => HOLVar s u -> HOLTerm t u -> HOLTerm (s -> t) u
-  (:@:) :: (Typeable s, Typeable t, Typeable u) => HOLTerm (s -> t) u -> HOLTerm s u -> HOLTerm t u
+  App :: (Typeable s, Typeable t, Typeable u) => HOLTerm (s -> t) u -> HOLTerm s u -> HOLTerm t u
   Forall :: (Typeable s, Typeable u) => HOLVar s u -> HOLTerm Bool u -> HOLTerm Bool u
   Exists :: (Typeable s, Typeable u) => HOLVar s u -> HOLTerm Bool u -> HOLTerm Bool u
 
@@ -73,33 +68,34 @@ instance Show (HOLTerm t u) where
     (Var var) -> show var
     (Const cst) -> show cst
     (Not a) -> "(not " ++ "a" ++ ")"
-    (a :&: b) -> "(" ++ (show a) ++ " & " ++ (show b) ++ ")"
-    (a :|: b) -> "(" ++ (show a) ++ " | " ++ (show b) ++ ")"
-    (a :->: b) -> "(" ++ (show a) ++ " -> " ++ (show b) ++ ")"
+    (And a b) -> "(" ++ (show a) ++ " & " ++ (show b) ++ ")"
+    (Or a b) -> "(" ++ (show a) ++ " | " ++ (show b) ++ ")"
+    (Imply a b) -> "(" ++ (show a) ++ " -> " ++ (show b) ++ ")"
     (Lam v a) -> "\\" ++ (show v) ++ ". " ++ (show a)
-    (f :@: x) -> "(" ++ (show f) ++ "@" ++ (show x) ++ ")"
+    (App f x) -> "(" ++ (show f) ++ "@" ++ (show x) ++ ")"
     (Forall x f) -> "∀" ++ (show x) ++ ":" ++ (show f) 
     (Exists x f) -> "∃" ++ (show x) ++ ":" ++ (show f)
 
 \end{code}
 
-Conversion from and to HOL-Terms.
+Conversion from and to HOL-Terms. Mainly used for convinience to omit explicit constructor wrapping.
 \begin{code}
-class ToHOL a where
-  toHOL :: forall t u. (Typeable t, Typeable u) => a t u -> HOLTerm t u
+class (Typeable t, Typeable u) => ToHOL a t u where
+  toHOL :: a t u -> HOLTerm t u
 
-instance ToHOL HOLVar where
+instance (Typeable t, Typeable u) => ToHOL HOLVar t u where
   toHOL = Var
-instance ToHOL HOLConst where
-  toHOL (HOLConst x) = Const $ HOLConst x
-  toHOL (HOLDef name x) = Const $ HOLConst name
-instance ToHOL HOLTerm where
+instance (Typeable t, Typeable u) => ToHOL HOLConst t u where
+  toHOL c = case c of
+    (HOLConst _) -> Const c
+    (HOLDef name _) -> Const $ HOLConst name
+instance (Typeable t, Typeable u) => ToHOL HOLTerm t u where
   toHOL = id
-class FromHOL a where
+class (Typeable t, Typeable u) =>  FromHOL a t u where
   fromHOL :: HOLTerm t u -> a t u
-instance FromHOL HOLTerm where
+instance (Typeable t, Typeable u) => FromHOL HOLTerm t u where
   fromHOL = id
-type HOL a = (ToHOL a, FromHOL a)
+type HOL a t u = (ToHOL a t u, FromHOL a t u)
 
 \end{code}
 
@@ -112,41 +108,41 @@ constant :: (Typeable t, Typeable u) => String -> HOLConst t u
 constant cst = HOLConst cst
 
 not a = Not (toHOL a)
-a .& b = (toHOL a) :&: (toHOL b)
-a .| b = (toHOL a) :|: (toHOL b)
-a .-> b = (toHOL a) :->: (toHOL b)
-f .@ x = (toHOL f) :@: (toHOL x)
+a .& b = And (toHOL a) (toHOL b)
+a .| b = Or (toHOL a) (toHOL b)
+a .-> b = Imply (toHOL a) (toHOL b)
+f .@ x = App (toHOL f) (toHOL x)
 app f = (.@) f
 lam v a = Lam v (toHOL a)
 forall x f = Forall x (toHOL f)
 exists x f = Exists x (toHOL f)
 definition s f = HOLDef s f
 
+\end{code}
+
+Get the definition of a constant.
+\begin{code}
 def :: HOLConst t u -> HOLTerm t u
 def (HOLDef _ f) = f
 def (HOLConst _) = undefined
+\end{code}
 
+Get the name of a constant.
+\begin{code}
 name :: HOLConst t u -> String
 name (HOLDef name _) = name
 name (HOLConst name) = name
 
--- for generic lists:
+\end{code}
+
+Helper to generete List over multible types. Allows:
+x = constant "x" :: HOLConst (Bool) ()
+h = constant "h" :: HOLConst (Bool -> Bool) ()
+f = definition "f" $ T .& x
+l = [gen x, gen h, gen f]
+\begin{code}
 data SomeHOLConst u where
   SomeHOLConst :: (Typeable t) => !(HOLConst t u) -> SomeHOLConst u
 gen :: (Typeable t) => (HOLConst t u) -> SomeHOLConst u
 gen = SomeHOLConst
 \end{code}
-
-Examples
-
-x = HOLVar "x" :: HOLVar Bool
-y = HOLVar "y" :: HOLVar Int
-
-g0 = HOLVar "g" :: HOLVar (Bool -> Bool)
-h0 = HOLVar "h" :: HOLVar (Int -> Int)
-
-f0 = HOLVar "f" :: HOLVar (Int -> Bool)
-f1 = HOLVar "f" :: HOLVar (Int -> Int -> Bool)
-
-ax0 :: (ToHOL a2, ToHOL a1) => a1 (s -> t) -> a2 s -> HOLTerm t
-ax0 = \f x -> f .@ x
