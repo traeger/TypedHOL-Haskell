@@ -7,10 +7,6 @@ import Data.Typeable
 import Prelude hiding (forall, exists)
 import qualified Data.Functor.Const as FC
 
-infixl 4 .->
-infixl 5 .|
-infixl 6 .&
-infixl 7 .@
 \end{code}
 
 Definition of HOL
@@ -105,6 +101,10 @@ type HOL a t u = (ToHOL a t u, FromHOL a t u)
 
 Shorthands for construction or terms.
 \begin{code}
+infixl 4 .->
+infixl 5 .|
+infixl 6 .&
+infixl 7 .@
 
 var :: (Typeable t, Typeable u) => String -> HOLVar t u
 var = HOLVar
