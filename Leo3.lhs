@@ -6,7 +6,6 @@ import TPTP_THF
 import System.Process
 
 import Data.List (isPrefixOf)
-
 import Data.Typeable
 
 valid :: Typeable u => [SomeHOLConst u] -> HOLTerm Bool u -> IO Bool

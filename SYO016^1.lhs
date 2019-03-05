@@ -60,9 +60,9 @@ leibeq =
     y = var "y" :: HOLVar (Bool) ()
     p = var "p" :: HOLVar (Bool -> Bool) ()
   in
-    definition "leibeq" $ lam x $ lam y $ exists p $ p .@ x .-> p .@ y
+    definition "leibeq" $ lam x $ lam y $ forall p $ p .@ x .-> p .@ y
 
-h = constant "h":: HOLConst (Bool -> Bool) ()
+h = constant "h" :: HOLConst (Bool -> Bool) ()
 conj = leibeq .@ ( h .@ ( leibeq .@ ( h .@ T ) .@ ( h .@ F ) ) ) .@ ( h .@ F )
 
 problem = 
