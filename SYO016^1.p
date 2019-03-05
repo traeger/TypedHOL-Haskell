@@ -45,31 +45,3 @@ thf(conj,conjecture,
     ( leibeq @ ( h @ ( leibeq @ ( h @ $true ) @ ( h @ $false ) ) ) @ ( h @ $false ) )).
 
 %------------------------------------------------------------------------------
-
-\begin{code}
-module SYO016_1 where
-
-import HOL
-import TPTP_THF
-import Prelude hiding (forall, exists)
-import Leo3
-
-leibeq =
-  let
-    x = var "x" :: HOLVar (Bool) ()
-    y = var "y" :: HOLVar (Bool) ()
-    p = var "p" :: HOLVar (Bool -> Bool) ()
-  in
-    definition "leibeq" $ lam x $ lam y $ exists p $ p .@ x .-> p .@ y
-
-h = constant "h":: HOLConst (Bool -> Bool) ()
-conj = leibeq .@ ( h .@ ( leibeq .@ ( h .@ T ) .@ ( h .@ F ) ) ) .@ ( h .@ F )
-
-problem = 
-  [ gen h
-  , gen leibeq
-  ]
-
-g = toTPTP problem conj
-f = valid problem
-\end{code}

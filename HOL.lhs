@@ -1,10 +1,11 @@
 \begin{code}
-{-# LANGUAGE TypeOperators, DataKinds, GADTs, KindSignatures, ScopedTypeVariables, ConstraintKinds #-}
+{-# LANGUAGE TypeOperators, GADTs, KindSignatures, ScopedTypeVariables, ConstraintKinds #-}
 
 module HOL where
 
 import Data.Typeable
 import Prelude hiding (forall, exists)
+import qualified Data.Functor.Const as FC
 
 \end{code}
 Modelling HOL Types like:
@@ -26,56 +27,46 @@ infixl 7 .@
 class HOLTyped t where
   getHOLType :: t -> TypeRep
 
-instance Typeable t => HOLTyped (HOLVar t) where
+instance forall t u. (Typeable t, Typeable u) => HOLTyped (HOLVar t u) where
   getHOLType = head . typeRepArgs . typeOf
-instance Typeable t => HOLTyped (HOLTerm t) where
+instance forall t u. (Typeable t, Typeable u) => HOLTyped (HOLConst t u) where
   getHOLType = head . typeRepArgs . typeOf
-instance Typeable t => HOLTyped (HOLDef t) where
+instance forall t u. (Typeable t, Typeable u) => HOLTyped (HOLTerm t u) where
   getHOLType = head . typeRepArgs . typeOf
 \end{code}
 
 \begin{code}
-data HOLVar t where
-  HOLVar :: String -> HOLVar t
+data HOLVar t u where
+  HOLVar :: String -> HOLVar t u
 
-data HOLConst t where
-  HOLConst :: String -> HOLConst t
+data HOLConst t u where
+  HOLConst :: String -> HOLConst t u
+  HOLUninterpreted :: u -> HOLConst t u
+  HOLDef :: String -> HOLTerm t u -> HOLConst t u
 
-data HOLTerm t where
-  T :: HOLTerm Bool
-  F :: HOLTerm Bool
-  Var :: Typeable t => HOLVar t -> HOLTerm t
-  Const :: Typeable t => HOLConst t -> HOLTerm t
-  Not :: HOLTerm Bool -> HOLTerm Bool
-  (:&:) :: HOLTerm Bool -> HOLTerm Bool -> HOLTerm Bool
-  (:|:) :: HOLTerm Bool -> HOLTerm Bool -> HOLTerm Bool
-  (:->:) :: HOLTerm Bool -> HOLTerm Bool -> HOLTerm Bool
-  Lam :: (Typeable s, Typeable t) => HOLVar s -> HOLTerm t -> HOLTerm (s -> t)
-  (:@:) :: (Typeable s, Typeable t) => HOLTerm (s -> t) -> HOLTerm s -> HOLTerm t
-  Forall :: Typeable s => HOLVar s -> HOLTerm Bool -> HOLTerm Bool
-  Exists :: Typeable s => HOLVar s -> HOLTerm Bool -> HOLTerm Bool
+data HOLTerm t u where
+  T :: Typeable u => HOLTerm Bool u
+  F :: Typeable u => HOLTerm Bool u
+  Var :: (Typeable t, Typeable u) => HOLVar t u -> HOLTerm t u
+  Const :: (Typeable t, Typeable u) => HOLConst t u -> HOLTerm t u
+  Not :: Typeable u => HOLTerm Bool u -> HOLTerm Bool u
+  (:&:) :: Typeable u => HOLTerm Bool u -> HOLTerm Bool u -> HOLTerm Bool u
+  (:|:) :: Typeable u => HOLTerm Bool u -> HOLTerm Bool u -> HOLTerm Bool u
+  (:->:) :: Typeable u => HOLTerm Bool u -> HOLTerm Bool u -> HOLTerm Bool u
+  Lam :: (Typeable s, Typeable t, Typeable u) => HOLVar s u -> HOLTerm t u -> HOLTerm (s -> t) u
+  (:@:) :: (Typeable s, Typeable t, Typeable u) => HOLTerm (s -> t) u -> HOLTerm s u -> HOLTerm t u
+  Forall :: (Typeable s, Typeable u) => HOLVar s u -> HOLTerm Bool u -> HOLTerm Bool u
+  Exists :: (Typeable s, Typeable u) => HOLVar s u -> HOLTerm Bool u -> HOLTerm Bool u
 
-data HOLDef t where
-  HOLDefTerm :: String -> HOLTerm t -> HOLDef t
-  HOLDefConst :: HOLConst t -> HOLDef t
-
-instance Show (HOLDef t) where
-  show (HOLDefTerm name t) = "Def: " ++ name ++ " = " ++ (show t)
-  show (HOLDefConst v) = "Const: " ++ (show v)
-
--- for generic lists:
-data SomeHOLDef where
-  SomeHOLDef :: (Typeable t) => !(HOLDef t) -> SomeHOLDef
-gen :: (Typeable t) => (HOLDef t) -> SomeHOLDef
-gen = SomeHOLDef
-
-instance Show (HOLVar t) where
+instance Show (HOLVar t u) where
   show (HOLVar x) = x
 
-instance Show (HOLConst t) where
+instance Show (HOLConst t u) where
   show (HOLConst x) = x
+  show (HOLUninterpreted x) = ""
+  show (HOLDef name x) = name ++ ": " ++ (show x)
 
-instance Show (HOLTerm t) where
+instance Show (HOLTerm t u) where
   show x = case x of
     T -> "T"
     F -> "F"
@@ -95,18 +86,17 @@ instance Show (HOLTerm t) where
 Conversion from and to HOL-Terms.
 \begin{code}
 class ToHOL a where
-  toHOL :: forall t. Typeable t => a t -> HOLTerm t
+  toHOL :: forall t u. (Typeable t, Typeable u) => a t u -> HOLTerm t u
+
 instance ToHOL HOLVar where
   toHOL = Var
 instance ToHOL HOLConst where
-  toHOL = Const
+  toHOL (HOLConst x) = Const $ HOLConst x
+  toHOL (HOLDef name x) = Const $ HOLConst name
 instance ToHOL HOLTerm where
   toHOL = id
-instance ToHOL HOLDef where
-  toHOL (HOLDefTerm name t) = Const $ HOLConst name -- enforce type of t, make it a const
-  toHOL (HOLDefConst cst) = Const $ cst -- make it a const
 class FromHOL a where
-  fromHOL :: HOLTerm t -> a t
+  fromHOL :: HOLTerm t u -> a t u
 instance FromHOL HOLTerm where
   fromHOL = id
 type HOL a = (ToHOL a, FromHOL a)
@@ -115,6 +105,11 @@ type HOL a = (ToHOL a, FromHOL a)
 
 Shorthands for construction or terms.
 \begin{code}
+
+var :: (Typeable t, Typeable u) => String -> HOLVar t u
+var = HOLVar
+constant :: (Typeable t, Typeable u) => String -> HOLConst t u
+constant cst = HOLConst cst
 
 not a = Not (toHOL a)
 a .& b = (toHOL a) :&: (toHOL b)
@@ -125,12 +120,21 @@ app f = (.@) f
 lam v a = Lam v (toHOL a)
 forall x f = Forall x (toHOL f)
 exists x f = Exists x (toHOL f)
-definition s f = HOLDefTerm s f
-constant cst = HOLDefConst cst
+definition s f = HOLDef s f
 
-def (HOLDefTerm _ f) = f
-name (HOLDefTerm n _) = n
-name (HOLDefConst (HOLConst n)) = n
+def :: HOLConst t u -> HOLTerm t u
+def (HOLDef _ f) = f
+def (HOLConst _) = undefined
+
+name :: HOLConst t u -> String
+name (HOLDef name _) = name
+name (HOLConst name) = name
+
+-- for generic lists:
+data SomeHOLConst u where
+  SomeHOLConst :: (Typeable t) => !(HOLConst t u) -> SomeHOLConst u
+gen :: (Typeable t) => (HOLConst t u) -> SomeHOLConst u
+gen = SomeHOLConst
 \end{code}
 
 Examples
