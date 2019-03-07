@@ -52,7 +52,7 @@ module SYO016_1 where
 import HOL
 import TPTP_THF
 import Prelude hiding (forall, exists)
-import Leo3
+import Prover.HOL.Leo3
 
 leibeq =
   let
@@ -71,5 +71,5 @@ problem =
   ]
 
 g = toTPTP problem conj
-f = valid problem
+f = valid problem conj
 \end{code}
