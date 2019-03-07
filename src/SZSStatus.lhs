@@ -14,14 +14,14 @@ instance Show SZSStatus where
   show (SZSSuccess reason) = show reason
   show (SZSNoSuccess reason) = show reason
 
--- get the SZSStatus form name Status Name
+-- get the SZSStatus from a status name (like "Theorem", "CounterEquivalent", "Stopped"...)
 fromName :: String -> Maybe SZSStatus
 fromName reason = Maybe.listToMaybe $ Maybe.catMaybes $ 
   [ fmap SZSSuccess $ fromSuccessName reason
   , fmap SZSNoSuccess $ fromNoSuccessName reason
   ]
 
--- get the SZSStatus form name Status Type (like "THM", "ERR", "GUP"..)
+-- get the SZSStatus from a status type (like "THM", "ERR", "GUP"...)
 fromType :: String -> Maybe SZSStatus
 fromType reason = Maybe.listToMaybe $ Maybe.catMaybes $
   [ fmap SZSSuccess $ fromSuccessType reason
