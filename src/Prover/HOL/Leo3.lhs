@@ -34,6 +34,7 @@ runProver tptp = do
   let status = filter (isPrefixOf leo3SZSStatusPrefix) $ lines out
   return $ head status
 
+-- right now, this abstraction makes no sence at all. But: hopefully provers will have generalized functionality someday :)
 data HOLProver_Leo3 u = HOLProver_Leo3
 instance Typeable u => Prover (HOLProver_Leo3 u) where
   type ProveConstant (HOLProver_Leo3 u) = SomeHOLConst u
