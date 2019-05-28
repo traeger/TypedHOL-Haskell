@@ -12,13 +12,11 @@ A fully Typed HOL Language Definition using GATs, supporting the TPTP syntax and
 [TBD]
 
 ### first run
-'''
-$ cabal configure
-'''
+```$ cabal configure
+```
 [TBD] [.. install packages]
 
-'''
-$ cd src
+```$ cd src
 $ ghci 'SYO016^1.lhs' 
 GHCi, version [...] :? for help
 [1 of 6] Compiling Logic.HOL        ( Logic/HOL.lhs, interpreted )
@@ -28,24 +26,21 @@ GHCi, version [...] :? for help
 [5 of 6] Compiling Logic.Prover.HOL.Leo3 ( Logic/Prover/HOL/Leo3.lhs, interpreted )
 [6 of 6] Compiling SYO016_1         ( SYO016^1.lhs, interpreted )
 Ok, six modules loaded.
-'''
+```
 
 Print the problem (with type)
-'''
-*SYO016_1> prettyTyped formulae
+```*SYO016_1> prettyTyped formulae
 [ h :: Bool -> Bool
 , leibeq: \x. \y. ∀p: ((p@x) -> (p@y)) :: Bool -> Bool -> Bool ]
-'''
+```
 
 Print the conjecture (with type)
-'''
-*SYO016_1> prettyTyped conjecture
+```*SYO016_1> prettyTyped conjecture
 ((leibeq@(h@((leibeq@(h@T))@(h@F))))@(h@F)) :: Bool
-'''
+```
 
 Call leo3 to prover the conjecture given the 
-'''
-*SYO016_1> Leo3.valid formulae conjecture
+```*SYO016_1> Leo3.valid formulae conjecture
 % [INFORMATION]      No timeout was given, using default timeout -t 60 
 % Time passed: 3148ms
 % Effective reasoning time: 2072ms
@@ -64,4 +59,4 @@ Call leo3 to prover the conjecture given the
 % SZS status Theorem for /dev/stdin : 3148 ms resp. 2072 ms w/o parsing
 
 Theorem
-'''
+```
