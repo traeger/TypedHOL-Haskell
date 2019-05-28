@@ -43,7 +43,7 @@ Print the conjecture (with type)
 ((leibeq@(h@((leibeq@(h@T))@(h@F))))@(h@F)) :: Bool
 ```
 
-Call leo3 to prover the conjecture given the 
+Call leo3 to prover the conjecture given the formulae
 ```
 *SYO016_1> Leo3.valid formulae conjecture
 % [INFORMATION]      No timeout was given, using default timeout -t 60 
