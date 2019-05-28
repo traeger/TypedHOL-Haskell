@@ -11,7 +11,7 @@ module Logic.HOL (
   not, forall, exists, app, lam, definition,
   (.->), (.|), (.&), (.@),
   name, def,
-  SomeHOLConst(..), gen,
+  SomeHOLFormulae(..), gen,
   pretty, prettyTyped,
 ) where
 
@@ -177,16 +177,16 @@ h = constant "h" :: HOLConst (Bool -> Bool) ()
 f = definition "f" $ T .& x
 l = [gen x, gen h, gen f]
 \begin{code}
-data SomeHOLConst u where
-  SomeHOLConst :: (Typeable t) => !(HOLConst t u) -> SomeHOLConst u
-gen :: (Typeable t) => (HOLConst t u) -> SomeHOLConst u
-gen = SomeHOLConst
+data SomeHOLFormulae u where
+  SomeHOLFormulae :: (Typeable t) => !(HOLConst t u) -> SomeHOLFormulae u
+gen :: (Typeable t) => (HOLConst t u) -> SomeHOLFormulae u
+gen = SomeHOLFormulae
 
-instance (Typeable t, Show t) => Show (SomeHOLConst t) where
+instance (Typeable t, Show t) => Show (SomeHOLFormulae t) where
   show = show . pretty
 
-instance (Typeable u) => Pretty (SomeHOLConst u) where
-  pretty (SomeHOLConst x) = pretty x
-instance (Typeable u) => PrettyTyped (SomeHOLConst u) where
-  prettyTyped (SomeHOLConst x) = prettyTyped x
+instance (Typeable u) => Pretty (SomeHOLFormulae u) where
+  pretty (SomeHOLFormulae x) = pretty x
+instance (Typeable u) => PrettyTyped (SomeHOLFormulae u) where
+  prettyTyped (SomeHOLFormulae x) = prettyTyped x
 \end{code}

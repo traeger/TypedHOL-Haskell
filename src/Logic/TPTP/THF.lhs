@@ -60,10 +60,10 @@ toTHFTerm term = case term of
   Lam x a -> "( ^[" ++ (toTHFVarName x) ++ ": " ++ (toTHFType $ Var x) ++ "]: " ++ (toTHFTerm a) ++ " )"
   App a x -> "(" ++ (toTHFTerm a) ++ "@" ++ (toTHFTerm x) ++ ")"
   Forall x a -> "( ![" ++ (toTHFVarName x) ++ ": " ++ (toTHFType $ Var x) ++ "]: " ++ (toTHFTerm a) ++ " )"
-  Exists x a -> "( ![" ++ (toTHFVarName x) ++ ": " ++ (toTHFType $ Var x) ++ "]: " ++ (toTHFTerm a) ++ " )"
+  Exists x a -> "( ?[" ++ (toTHFVarName x) ++ ": " ++ (toTHFType $ Var x) ++ "]: " ++ (toTHFTerm a) ++ " )"
 
-toTPTP :: Typeable u => [SomeHOLConst u] -> HOLTerm Bool u -> [String]
+toTPTP :: Typeable u => [SomeHOLFormulae u] -> HOLTerm Bool u -> [String]
 toTPTP defs conj = tptp_defs ++ tptp_conj where
   tptp_conj = toTHFConjecture conj
-  tptp_defs = concat $ map (\(SomeHOLConst a) -> toTHF a) defs
+  tptp_defs = concat $ map (\(SomeHOLFormulae a) -> toTHF a) defs
 \end{code}
