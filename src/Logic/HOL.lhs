@@ -1,11 +1,24 @@
 \begin{code}
 {-# LANGUAGE GADTs, KindSignatures, ScopedTypeVariables, ConstraintKinds, MultiParamTypeClasses, FlexibleInstances, FlexibleContexts #-}
 
-module HOL where
+module Logic.HOL (
+  HOLTyped(..),
+  ToHOL(..), FromHOL(..),
+  HOLVar(..),
+  HOLConst(..),
+  HOLTerm(..),
+  var, constant,
+  not, forall, exists, app, lam, definition,
+  (.->), (.|), (.&), (.@),
+  name, def,
+  SomeHOLConst(..), gen,
+  pretty, prettyTyped,
+) where
 
 import Data.Typeable
-import Prelude hiding (forall, exists)
+import Prelude hiding (forall, exists, not)
 import qualified Data.Functor.Const as FC
+import Data.Text.Prettyprint.Doc
 
 \end{code}
 
@@ -24,6 +37,14 @@ instance forall t u. (Typeable t, Typeable u) => HOLTyped (HOLConst t u) where
   getHOLType = head . typeRepArgs . typeOf
 instance forall t u. (Typeable t, Typeable u) => HOLTyped (HOLTerm t u) where
   getHOLType = head . typeRepArgs . typeOf
+\end{code}
+
+Pretty printer for typed constances, variables, terms and so on.
+\begin{code}
+class PrettyTyped t where
+  prettyTyped :: t -> Doc ann
+instance PrettyTyped a => PrettyTyped [a] where
+  prettyTyped as = list $ map prettyTyped as
 \end{code}
 
 \begin{code}
@@ -50,32 +71,43 @@ data HOLTerm t u where
   Exists :: (Typeable s, Typeable u) => HOLVar s u -> HOLTerm Bool u -> HOLTerm Bool u
 
 instance Show (HOLVar t u) where
-  show (HOLVar x) = x
-
+  show = show . pretty
 instance Show (HOLConst t u) where
-  show (HOLConst x) = x
-  show (HOLUninterpreted x) = ""
-  show (HOLDef name x) = name ++ ": " ++ (show x)
+  show = show . pretty
 
+instance Pretty (HOLVar t u) where
+  pretty (HOLVar x) = pretty x
+instance Pretty (HOLConst t u) where
+  pretty (HOLConst x) = pretty x
+  pretty (HOLUninterpreted x) = pretty ""
+  pretty (HOLDef name x) = pretty name <> pretty ":" <+> pretty x
+
+instance (Typeable t, Typeable u) => PrettyTyped (HOLVar t u) where
+  prettyTyped x = pretty x <+> pretty "::" <+> (pretty $ show $ getHOLType x)
+instance (Typeable t, Typeable u) => PrettyTyped (HOLConst t u) where
+  prettyTyped x = pretty x <+> pretty "::" <+> (pretty $ show $ getHOLType x)
 \end{code}
 
-TODO: Use a better ShowS implementation to remove unnessesary "()".
+TODO: Use a better Pretty implementation to remove unnessesary "()".
 \begin{code}
 instance Show (HOLTerm t u) where
-  show x = case x of
-    T -> "T"
-    F -> "F"
-    (Var var) -> show var
-    (Const cst) -> show cst
-    (Not a) -> "(not " ++ "a" ++ ")"
-    (And a b) -> "(" ++ (show a) ++ " & " ++ (show b) ++ ")"
-    (Or a b) -> "(" ++ (show a) ++ " | " ++ (show b) ++ ")"
-    (Imply a b) -> "(" ++ (show a) ++ " -> " ++ (show b) ++ ")"
-    (Lam v a) -> "\\" ++ (show v) ++ ". " ++ (show a)
-    (App f x) -> "(" ++ (show f) ++ "@" ++ (show x) ++ ")"
-    (Forall x f) -> "∀" ++ (show x) ++ ":" ++ (show f) 
-    (Exists x f) -> "∃" ++ (show x) ++ ":" ++ (show f)
-
+  show = show . pretty
+instance Pretty (HOLTerm t u) where
+  pretty x = case x of
+    T -> pretty "T"
+    F -> pretty "F"
+    (Var var) -> pretty $ show var
+    (Const cst) -> pretty $ show cst
+    (Not a) -> parens $ pretty "not" <+> pretty a
+    (And a b) -> parens $  pretty a <+> pretty "&" <+> pretty b
+    (Or a b) -> parens $  pretty a <+> pretty "|" <+> pretty b
+    (Imply a b) -> parens $  pretty a <+> pretty "->" <+> pretty b
+    (Lam v a) -> pretty "\\" <> pretty v <> pretty "." <+> pretty a
+    (App f x) -> parens $ pretty f <> pretty "@" <> pretty x
+    (Forall x f) -> pretty "∀" <> pretty x <> pretty ":" <+> pretty f 
+    (Exists x f) -> pretty "∃" <> pretty x <> pretty ":" <+> pretty f
+instance (Typeable t, Typeable u) => PrettyTyped (HOLTerm t u) where
+  prettyTyped x = pretty x <+> pretty "::" <+> (pretty $ show $ getHOLType x)
 \end{code}
 
 Conversion from and to HOL-Terms. Mainly used for convinience to omit explicit constructor wrapping.
@@ -149,4 +181,12 @@ data SomeHOLConst u where
   SomeHOLConst :: (Typeable t) => !(HOLConst t u) -> SomeHOLConst u
 gen :: (Typeable t) => (HOLConst t u) -> SomeHOLConst u
 gen = SomeHOLConst
+
+instance (Typeable t, Show t) => Show (SomeHOLConst t) where
+  show = show . pretty
+
+instance (Typeable u) => Pretty (SomeHOLConst u) where
+  pretty (SomeHOLConst x) = pretty x
+instance (Typeable u) => PrettyTyped (SomeHOLConst u) where
+  prettyTyped (SomeHOLConst x) = prettyTyped x
 \end{code}

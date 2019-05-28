@@ -1,0 +1,49 @@
+name:                TypedHOL
+
+-- The package version.  See the Haskell package versioning policy (PVP) 
+-- for standards guiding when and how versions should be incremented.
+-- https://wiki.haskell.org/Package_versioning_policy
+-- PVP summary:      +-+------- breaking API changes
+--                   | | +----- non-breaking API additions
+--                   | | | +--- code changes with no API change
+version:             0.1.0.0
+
+synopsis:            A fully Typed HOL Language Definition using GATs, supporting the TPTP syntax and the Leo3 theorem prover.
+-- description:         
+license:             BSD3
+license-file:        LICENSE
+author:              Marco Traeger
+
+-- An email address to which users can send suggestions, bug reports, and 
+-- patches.
+maintainer:          marco.traeger@gmail.com
+copyright:           Marco Träger, 2017 - 2019
+category:            Math
+build-type:          Simple
+extra-source-files:  ChangeLog.md
+cabal-version:       >=1.10
+
+library
+  -- Modules exported by the library.
+  exposed-modules:     TPTP_Parser, SZSStatus, HOL, Pretty, Prover, TPTP_THF, Prover.HOL.Leo3
+  
+  -- Modules included in this library but not exported.
+  -- other-modules:       
+  
+  -- LANGUAGE extensions used by modules in this package.
+  other-extensions:    GADTs, KindSignatures, ScopedTypeVariables, ConstraintKinds, MultiParamTypeClasses, FlexibleInstances, FlexibleContexts, TypeFamilies, ViewPatterns, RankNTypes
+  
+  -- Other library packages from which modules are imported.
+  build-depends:       base >=4.10 && <4.11, 
+                       parser-combinators >=1.0 && <1.1, 
+                       megaparsec >=7.0 && <7.1, 
+                       bimap >=0.3 && <0.4, 
+                       process >=1.6 && <1.7,
+                       prettyprinter >=1.2
+  
+  -- Directories containing source files.
+  hs-source-dirs:      src
+  
+  -- Base language which the package is written in.
+  default-language:    Haskell2010
+  

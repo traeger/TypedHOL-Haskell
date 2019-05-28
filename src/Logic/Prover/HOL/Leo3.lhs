@@ -1,16 +1,15 @@
 \begin{code}
 {-# LANGUAGE TypeFamilies #-}
 
-module Prover.HOL.Leo3
+module Logic.Prover.HOL.Leo3
   ( valid
+  , toTPTP
   ) where
 
-import HOL
-import TPTP_THF
+import Logic.HOL
+import Logic.TPTP.THF
 
-import Prover
-import SZSStatus (SZSStatus)
-import qualified SZSStatus as SZSStatus
+import Logic.Prover
 
 import System.Process
 import Data.List (isPrefixOf)
@@ -23,7 +22,7 @@ valid' :: Typeable u => [SomeHOLConst u] -> HOLTerm Bool u -> IO SZSStatus
 valid' csts conj = do
   let tptp = toTPTP csts conj
   result <- runProver tptp
-  return $ fromJust $ SZSStatus.fromName $ head $ words $ drop (length leo3SZSStatusPrefix) result
+  return $ fromJust $ szsStatusFromName $ head $ words $ drop (length leo3SZSStatusPrefix) result
 
 runProver :: [String] -> IO String
 runProver tptp = do

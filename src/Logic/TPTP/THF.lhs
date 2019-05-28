@@ -1,14 +1,14 @@
 \begin{code}
 {-# LANGUAGE ViewPatterns, TypeFamilies, RankNTypes #-}
 
-module TPTP_THF where
+module Logic.TPTP.THF where
 
-import HOL
+import Logic.HOL
 
 import Data.Typeable
 import qualified Data.Char as Char
 
-import Prelude hiding (forall, exists)
+import Prelude hiding (not, forall, exists)
 
 toTHF :: (Typeable t, Typeable u) => HOLConst t u -> [String]
 toTHF cst = case cst of

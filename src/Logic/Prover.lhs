@@ -1,10 +1,13 @@
 \begin{code}
 {-# LANGUAGE TypeFamilies #-}
 
-module Prover where
+module Logic.Prover
+( SZSStatus(..), SZSSuccessReason(..), SZSNoSuccessReason(..)
+, Prover(..)
+, szsStatusFromName, szsStatusFromType
+) where
 
-import SZSStatus (SZSStatus)
-import qualified SZSStatus as SZSStatus
+import Logic.Prover.SZSStatus
 
 class Prover p where
   type ProveConstant p

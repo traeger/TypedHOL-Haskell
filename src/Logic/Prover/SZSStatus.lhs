@@ -1,5 +1,8 @@
 \begin{code}
-module SZSStatus where
+module Logic.Prover.SZSStatus
+( SZSStatus(..), SZSSuccessReason(..), SZSNoSuccessReason(..)
+, szsStatusFromName, szsStatusFromType
+) where
 
 import Data.Bimap (Bimap)
 import qualified Data.Bimap as Bimap
@@ -27,6 +30,9 @@ fromType reason = Maybe.listToMaybe $ Maybe.catMaybes $
   [ fmap SZSSuccess $ fromSuccessType reason
   , fmap SZSNoSuccess $ fromNoSuccessType reason
   ]
+
+szsStatusFromName = fromName
+szsStatusFromType = fromType
 
 \end{code}
 /**

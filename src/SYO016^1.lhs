@@ -49,27 +49,26 @@ thf(conj,conjecture,
 \begin{code}
 module SYO016_1 where
 
-import HOL
-import TPTP_THF
-import Prelude hiding (forall, exists)
-import Prover.HOL.Leo3
+import Logic.HOL
+import Logic.Prover.HOL.Leo3 as Leo3
+import Prelude hiding (not, forall, exists)
 
 leibeq =
   let
     x = var "x" :: HOLVar (Bool) ()
     y = var "y" :: HOLVar (Bool) ()
-    p = var "p" :: HOLVar (Bool -> Bool) ()
+    p = var "p" -- :: HOLVar (Bool -> Bool) () <- autoderived
   in
     definition "leibeq" $ lam x $ lam y $ forall p $ p .@ x .-> p .@ y
 
 h = constant "h" :: HOLConst (Bool -> Bool) ()
-conj = leibeq .@ ( h .@ ( leibeq .@ ( h .@ T ) .@ ( h .@ F ) ) ) .@ ( h .@ F )
+conjecture = leibeq .@ ( h .@ ( leibeq .@ ( h .@ T ) .@ ( h .@ F ) ) ) .@ ( h .@ F )
 
-problem = 
+formulae = 
   [ gen h
   , gen leibeq
   ]
 
-g = toTPTP problem conj
-f = valid problem conj
+g = Leo3.toTPTP formulae conjecture
+f = Leo3.valid formulae conjecture
 \end{code}
