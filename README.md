@@ -1,4 +1,4 @@
-# Typed HOL
+# Typed HOL in Haskell
 A fully Typed HOL Language Definition using GATs, supporting the TPTP syntax and the Leo3 theorem prover.
 
 ## First steps 

@@ -25,13 +25,27 @@ cabal-version:       >=1.10
 
 library
   -- Modules exported by the library.
-  exposed-modules:     TPTP_Parser, SZSStatus, HOL, Pretty, Prover, TPTP_THF, Prover.HOL.Leo3
+  exposed-modules:     Logic.Prover.SZSStatus, 
+                       Logic.Prover, 
+                       Logic.TPTP, 
+                       Logic.TPTP.THF, 
+                       Logic.HOL, 
+                       Logic.Prover.HOL.Leo3
   
   -- Modules included in this library but not exported.
   -- other-modules:       
   
   -- LANGUAGE extensions used by modules in this package.
-  other-extensions:    GADTs, KindSignatures, ScopedTypeVariables, ConstraintKinds, MultiParamTypeClasses, FlexibleInstances, FlexibleContexts, TypeFamilies, ViewPatterns, RankNTypes
+  other-extensions:    GADTs, 
+                       KindSignatures, 
+                       ScopedTypeVariables, 
+                       ConstraintKinds, 
+                       MultiParamTypeClasses, 
+                       FlexibleInstances, 
+                       FlexibleContexts, 
+                       TypeFamilies, 
+                       ViewPatterns, 
+                       RankNTypes
   
   -- Other library packages from which modules are imported.
   build-depends:       base >=4.10 && <4.11, 
