@@ -33,7 +33,7 @@ Which allows constuction of new terms and the automatic deriving of their types:
 \x. y :: Bool -> Bool
 ```
 
-But fails on typelevel if you try to build terms which missmatching types:
+But fails on typelevel if you try to build terms with missmatching types:
 ```
 > x .@ y
 [..]: error:
@@ -87,7 +87,32 @@ GHCi, version [...] :? for help
 Ok, six modules loaded.
 ```
 
-Print the problem (with type)
+The file SYO016^1.lhs contains the haskell formulation of the TPTP problem [SYO016^1](http://www.tptp.org/cgi-bin/SeeTPTP?Category=Problems&Domain=SYO&File=SYO016^1.p){:target="_blank"}.
+```
+module SYO016_1 where
+
+import Logic.HOL
+import Logic.Prover.HOL.Leo3 as Leo3
+import Prelude hiding (not, forall, exists)
+
+leibeq =
+  let
+    x = var "x" :: HOLVar (Bool) ()
+    y = var "y" :: HOLVar (Bool) ()
+    p = var "p" -- :: HOLVar (Bool -> Bool) () <- autoderived
+  in
+    definition "leibeq" $ lam x $ lam y $ forall p $ p .@ x .-> p .@ y
+
+h = constant "h" :: HOLConst (Bool -> Bool) ()
+conjecture = leibeq .@ ( h .@ ( leibeq .@ ( h .@ T ) .@ ( h .@ F ) ) ) .@ ( h .@ F )
+
+formulae = 
+  [ gen h
+  , gen leibeq
+  ]
+```
+
+Print the formulae (with types)
 ```
 *SYO016_1> formulae
 [h :: Bool -> Bool,leibeq: \x. \y. ∀p: ((p@x) -> (p@y)) :: Bool -> Bool -> Bool]
@@ -99,7 +124,7 @@ Print the conjecture (with type)
 ((leibeq@(h@((leibeq@(h@T))@(h@F))))@(h@F)) :: Bool
 ```
 
-Call leo3 to prover the conjecture given the formulae
+Call leo3 to prove the conjecture given the formulae
 ```
 *SYO016_1> Leo3.valid formulae conjecture
 % [INFORMATION]      No timeout was given, using default timeout -t 60 
