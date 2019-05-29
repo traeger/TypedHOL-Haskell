@@ -87,7 +87,7 @@ GHCi, version [...] :? for help
 Ok, six modules loaded.
 ```
 
-The file SYO016^1.lhs contains the haskell formulation of the TPTP problem [SYO016^1](http://www.tptp.org/cgi-bin/SeeTPTP?Category=Problems&Domain=SYO&File=SYO016^1.p){:target="_blank"}.
+The file SYO016^1.lhs contains the haskell formulation of the TPTP problem [SYO016^1](http://www.tptp.org/cgi-bin/SeeTPTP?Category=Problems&Domain=SYO&File=SYO016^1.p).
 ```
 module SYO016_1 where
 
