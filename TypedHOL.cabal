@@ -8,7 +8,7 @@ name:                TypedHOL
 --                   | | | +--- code changes with no API change
 version:             0.1.0.0
 
-synopsis:            A fully Typed HOL Language Definition using GATs, supporting the TPTP syntax and the Leo3 theorem prover.
+synopsis:            A fully Typed HOL Language Definition using GADTs, supporting the TPTP syntax and the Leo3 theorem prover.
 -- description:         
 license:             BSD3
 license-file:        LICENSE

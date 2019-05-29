@@ -43,8 +43,6 @@ Pretty printer for typed constances, variables, terms and so on.
 \begin{code}
 class PrettyTyped t where
   prettyTyped :: t -> Doc ann
-instance PrettyTyped a => PrettyTyped [a] where
-  prettyTyped as = list $ map prettyTyped as
 \end{code}
 
 \begin{code}
@@ -56,6 +54,9 @@ data HOLConst t u where
   HOLUninterpreted :: u -> HOLConst t u
   HOLDef :: String -> HOLTerm t u -> HOLConst t u
 
+-- TODO add binder style for forall and exists? 
+-- hence, change the type to:
+-- (Typeable s, Typeable u) => HOLVar s u -> HOLTerm (s -> Bool) u -> HOLTerm Bool u
 data HOLTerm t u where
   T :: Typeable u => HOLTerm Bool u
   F :: Typeable u => HOLTerm Bool u
@@ -70,11 +71,6 @@ data HOLTerm t u where
   Forall :: (Typeable s, Typeable u) => HOLVar s u -> HOLTerm Bool u -> HOLTerm Bool u
   Exists :: (Typeable s, Typeable u) => HOLVar s u -> HOLTerm Bool u -> HOLTerm Bool u
 
-instance Show (HOLVar t u) where
-  show = show . pretty
-instance Show (HOLConst t u) where
-  show = show . pretty
-
 instance Pretty (HOLVar t u) where
   pretty (HOLVar x) = pretty x
 instance Pretty (HOLConst t u) where
@@ -86,18 +82,21 @@ instance (Typeable t, Typeable u) => PrettyTyped (HOLVar t u) where
   prettyTyped x = pretty x <+> pretty "::" <+> (pretty $ show $ getHOLType x)
 instance (Typeable t, Typeable u) => PrettyTyped (HOLConst t u) where
   prettyTyped x = pretty x <+> pretty "::" <+> (pretty $ show $ getHOLType x)
+
+instance (Typeable t, Typeable u) => Show (HOLVar t u) where
+  show = show . prettyTyped
+instance (Typeable t, Typeable u) => Show (HOLConst t u) where
+  show = show . prettyTyped
 \end{code}
 
 TODO: Use a better Pretty implementation to remove unnessesary "()".
 \begin{code}
-instance Show (HOLTerm t u) where
-  show = show . pretty
 instance Pretty (HOLTerm t u) where
   pretty x = case x of
     T -> pretty "T"
     F -> pretty "F"
-    (Var var) -> pretty $ show var
-    (Const cst) -> pretty $ show cst
+    (Var var) -> pretty var
+    (Const cst) -> pretty cst
     (Not a) -> parens $ pretty "not" <+> pretty a
     (And a b) -> parens $  pretty a <+> pretty "&" <+> pretty b
     (Or a b) -> parens $  pretty a <+> pretty "|" <+> pretty b
@@ -106,8 +105,12 @@ instance Pretty (HOLTerm t u) where
     (App f x) -> parens $ pretty f <> pretty "@" <> pretty x
     (Forall x f) -> pretty "∀" <> pretty x <> pretty ":" <+> pretty f 
     (Exists x f) -> pretty "∃" <> pretty x <> pretty ":" <+> pretty f
+
 instance (Typeable t, Typeable u) => PrettyTyped (HOLTerm t u) where
   prettyTyped x = pretty x <+> pretty "::" <+> (pretty $ show $ getHOLType x)
+
+instance (Typeable t, Typeable u) => Show (HOLTerm t u) where
+  show = show . prettyTyped
 \end{code}
 
 Conversion from and to HOL-Terms. Mainly used for convinience to omit explicit constructor wrapping.
@@ -182,11 +185,11 @@ data SomeHOLFormulae u where
 gen :: (Typeable t) => (HOLConst t u) -> SomeHOLFormulae u
 gen = SomeHOLFormulae
 
-instance (Typeable t, Show t) => Show (SomeHOLFormulae t) where
-  show = show . pretty
-
 instance (Typeable u) => Pretty (SomeHOLFormulae u) where
   pretty (SomeHOLFormulae x) = pretty x
 instance (Typeable u) => PrettyTyped (SomeHOLFormulae u) where
   prettyTyped (SomeHOLFormulae x) = prettyTyped x
+
+instance (Typeable t) => Show (SomeHOLFormulae t) where
+  show = show . prettyTyped
 \end{code}

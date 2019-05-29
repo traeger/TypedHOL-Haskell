@@ -3,32 +3,48 @@ Experimental, not working at all.
 \begin{code}
 {-# LANGUAGE GADTs, KindSignatures, ScopedTypeVariables, ConstraintKinds, MultiParamTypeClasses, FlexibleInstances, FlexibleContexts #-}
 
-module TPTP_Parser where
+module Logic.TPTP.THF.TypeParser 
+( typeExpr
+) where
 
-import HOL
-
+import Logic.HOL
 import Data.Typeable
 
-import Control.Monad (void)
-import Control.Monad.Combinators.Expr -- from parser-combinators
-import Data.Void
+import Logic.TPTP.ParserCore
+
 import Text.Megaparsec
-import Text.Megaparsec.Char
-import qualified Text.Megaparsec.Char.Lexer as L
+import Control.Monad.Combinators.Expr
 
-type Parser = Parsec Void String
+typeExpr :: Parser TypeRep
+typeExpr = makeExprParser typeTerm typeOperators
 
-sc :: Parser ()
-sc = L.space space1 lineCmnt blockCmnt
-  where
-    lineCmnt  = L.skipLineComment "%"
-    blockCmnt = L.skipBlockComment "/*" "*/"
+typeTerm :: Parser TypeRep
+typeTerm = parens typeExpr
+  <|> (typeOf (undefined :: Bool)) <$ rword "$o"
+  <|> (typeOf (undefined :: Int)) <$ rword "$i" 
+  -- we use int for now, since the $i type is not used in any specific why 
 
-lexeme :: Parser a -> Parser a
-lexeme = L.lexeme sc
+typeOperators :: [[Operator Parser TypeRep]]
+typeOperators =
+  [ [ InfixL (mkFunTy <$ symbol "<") ]
+  ]
 
-identifier :: Parser String
-identifier = (:) <$> letterChar <*> many alphaNumChar
+\end{code}
+parseType :: Parser TypeRep
+parseType = parseFunc' <|> parseSimpleType' where
+  parseBool' = do
+    rword "$o"
+    return $ typeOf (undefined :: Bool) 
+  parseInvididual' = do
+    rword "$i"
+    return $ typeOf (undefined :: Int) -- we use int for now, since the $i type is not used in any specific why anyway
+  parseSimpleType' = parseBool' <|> parseInvididual'
+  parseFunc' = do
+    x <- parseSimpleType'
+    rword ">"
+    y <- parseType
+    return $ mkFunTy x y
+
 
 class (Typeable t, Typeable u) => TypeParser a t u where
   parseType :: Parser (a t u)
@@ -49,7 +65,6 @@ instance (Typeable u, TypeParser HOLVar s u, TypeParser HOLTerm t u) => TypePars
     return $ Lam x f
 
 testparse parser str = parseTest (between sc eof parser) str
-\end{code}
 thf_type_bool :: Parser Bool
 thf_type_bool = do
   string "$o"

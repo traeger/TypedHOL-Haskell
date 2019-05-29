@@ -1,5 +1,62 @@
 # Typed HOL in Haskell
-A fully Typed HOL Language Definition using GATs, supporting the TPTP syntax and the Leo3 theorem prover.
+A fully Typed HOL Language Definition using GADTs, supporting the TPTP syntax and the Leo3 theorem prover.
+
+## HOL using GADTs
+We are using Generalized Abstract Data Types to model HOLTerms. 
+This allows us to encode the type of a HOLTerm directly into it's Haskell type.
+
+Noteable are:
+```
+  Lam :: (Typeable s, Typeable t, Typeable u) => HOLVar s u -> HOLTerm t u -> HOLTerm (s -> t) u
+  App :: (Typeable s, Typeable t, Typeable u) => HOLTerm (s -> t) u -> HOLTerm s u -> HOLTerm t u
+
+  f .@ x = App (toHOL f) (toHOL x)
+  lam v a = Lam v (toHOL a)
+```
+
+Which allows constuction of new terms and the automatic deriving of their types:
+```
+> x = var "x" :: HOLVar Bool ()
+> y = var "y" :: HOLVar Bool ()
+> f = var "f" :: HOLVar (Bool -> Bool) ()
+
+> f .@ x
+(f@x) :: Bool
+
+> lam x f
+\x. f :: Bool -> Bool -> Bool
+
+> lam y $ f .@ x
+\y. (f@x) :: Bool -> Bool
+
+> lam x y
+\x. y :: Bool -> Bool
+```
+
+But fails on typelevel if you try to build terms which missmatching types:
+```
+> x .@ y
+[..]: error:
+    • Couldn't match type ‘Bool’ with ‘Bool -> t’
+      Expected type: HOLVar (Bool -> t) ()
+        Actual type: HOLVar Bool ()
+    • In the first argument of ‘(.@)’, namely ‘x’
+      In the expression: x .@ y
+      In an equation for ‘it’: it = x .@ y
+    • Relevant bindings include
+        it :: HOLTerm t ()
+
+> (f .@ x) .@ y
+[..]: error:
+    • Couldn't match type ‘Bool’ with ‘Bool -> t’
+      Expected type: HOLTerm (Bool -> t) ()
+        Actual type: HOLTerm Bool ()
+    • In the first argument of ‘(.@)’, namely ‘(f .@ x)’
+      In the expression: (f .@ x) .@ y
+      In an equation for ‘it’: it = (f .@ x) .@ y
+    • Relevant bindings include
+        it :: HOLTerm t ()
+```
 
 ## First steps 
 ### install ghci
@@ -32,14 +89,13 @@ Ok, six modules loaded.
 
 Print the problem (with type)
 ```
-*SYO016_1> prettyTyped formulae
-[ h :: Bool -> Bool
-, leibeq: \x. \y. ∀p: ((p@x) -> (p@y)) :: Bool -> Bool -> Bool ]
+*SYO016_1> formulae
+[h :: Bool -> Bool,leibeq: \x. \y. ∀p: ((p@x) -> (p@y)) :: Bool -> Bool -> Bool]
 ```
 
 Print the conjecture (with type)
 ```
-*SYO016_1> prettyTyped conjecture
+*SYO016_1> conjecture
 ((leibeq@(h@((leibeq@(h@T))@(h@F))))@(h@F)) :: Bool
 ```
 
