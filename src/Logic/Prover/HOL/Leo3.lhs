@@ -18,7 +18,7 @@ import Data.Typeable
 
 leo3SZSStatusPrefix = "% SZS status "
 
-valid' :: Typeable u => [SomeHOLFormulae u] -> HOLTerm Bool u -> IO SZSStatus
+valid' :: Typeable u => [SomeHOLConst u] -> HOLTerm u Bool -> IO SZSStatus
 valid' csts conj = do
   let tptp = toTPTP csts conj
   result <- runProver tptp
@@ -36,11 +36,11 @@ runProver tptp = do
 -- right now, this abstraction makes no sence at all. But: hopefully provers will have generalized functionality someday :)
 data HOLProver_Leo3 u = HOLProver_Leo3
 instance Typeable u => Prover (HOLProver_Leo3 u) where
-  type ProveFormulae (HOLProver_Leo3 u) = SomeHOLFormulae u
-  type ProveConjecture (HOLProver_Leo3 u) = HOLTerm Bool u
+  type ProveConst (HOLProver_Leo3 u) = SomeHOLConst u
+  type ProveConjecture (HOLProver_Leo3 u) = HOLTerm u Bool
 
   validP HOLProver_Leo3 csts conj = valid' csts conj
 
-valid :: Typeable u => [SomeHOLFormulae u] -> HOLTerm Bool u -> IO SZSStatus
+valid :: Typeable u => [SomeHOLConst u] -> HOLTerm u Bool -> IO SZSStatus
 valid = validP HOLProver_Leo3
 \end{code}

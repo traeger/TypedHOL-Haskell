@@ -7,8 +7,8 @@ This allows us to encode the type of a HOLTerm directly into it's Haskell type.
 
 Noteable are:
 ```
-  Lam :: (Typeable s, Typeable t, Typeable u) => HOLVar s u -> HOLTerm t u -> HOLTerm (s -> t) u
-  App :: (Typeable s, Typeable t, Typeable u) => HOLTerm (s -> t) u -> HOLTerm s u -> HOLTerm t u
+  Lam :: (Typeable s, Typeable t, Typeable u) => HOLVar u s -> HOLTerm u t -> HOLTerm u (s -> t)
+  App :: (Typeable s, Typeable t, Typeable u) => HOLTerm u (s -> t) -> HOLTerm u s -> HOLTerm u t
 
   f .@ x = App (toHOL f) (toHOL x)
   lam v a = Lam v (toHOL a)
@@ -16,9 +16,9 @@ Noteable are:
 
 Which allows constuction of new terms and the automatic deriving of their types:
 ```
-> x = var "x" :: HOLVar Bool ()
-> y = var "y" :: HOLVar Bool ()
-> f = var "f" :: HOLVar (Bool -> Bool) ()
+> x = var "x" :: HOLVar () Bool
+> y = var "y" :: HOLVar () Bool ()
+> f = var "f" :: HOLVar () (Bool -> Bool)
 
 > f .@ x
 (f@x) :: Bool
@@ -38,24 +38,24 @@ But fails on typelevel if you try to build terms with missmatching types:
 > x .@ y
 [..]: error:
     • Couldn't match type ‘Bool’ with ‘Bool -> t’
-      Expected type: HOLVar (Bool -> t) ()
-        Actual type: HOLVar Bool ()
+      Expected type: HOLVar () (Bool -> t)
+        Actual type: HOLVar () Bool
     • In the first argument of ‘(.@)’, namely ‘x’
       In the expression: x .@ y
       In an equation for ‘it’: it = x .@ y
     • Relevant bindings include
-        it :: HOLTerm t ()
+        it :: HOLTerm () t
 
 > (f .@ x) .@ y
 [..]: error:
     • Couldn't match type ‘Bool’ with ‘Bool -> t’
-      Expected type: HOLTerm (Bool -> t) ()
-        Actual type: HOLTerm Bool ()
+      Expected type: HOLTerm () (Bool -> t)
+        Actual type: HOLTerm () Bool
     • In the first argument of ‘(.@)’, namely ‘(f .@ x)’
       In the expression: (f .@ x) .@ y
       In an equation for ‘it’: it = (f .@ x) .@ y
     • Relevant bindings include
-        it :: HOLTerm t ()
+        it :: HOLTerm () t
 ```
 
 ## First steps 
@@ -97,13 +97,13 @@ import Prelude hiding (not, forall, exists)
 
 leibeq =
   let
-    x = var "x" :: HOLVar (Bool) ()
-    y = var "y" :: HOLVar (Bool) ()
-    p = var "p" -- :: HOLVar (Bool -> Bool) () <- autoderived
+    x = var "x" :: HOLVar () (Bool) 
+    y = var "y" :: HOLVar () (Bool) 
+    p = var "p" -- :: HOLVar () (Bool -> Bool) <- autoderived
   in
     definition "leibeq" $ lam x $ lam y $ forall p $ p .@ x .-> p .@ y
 
-h = constant "h" :: HOLConst (Bool -> Bool) ()
+h = constant "h" :: HOLConst () (Bool -> Bool)
 conjecture = leibeq .@ ( h .@ ( leibeq .@ ( h .@ T ) .@ ( h .@ F ) ) ) .@ ( h .@ F )
 
 formulae = 

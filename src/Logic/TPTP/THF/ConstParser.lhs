@@ -1,28 +1,30 @@
 \section{Parser for Constant Declerations}
 
 \subsection{Usage}
-*> parseJust constExprGen0 "h: $o"
+\begin{terminal}
+*> parseJust constExprGen0 "h: \$o"
 h :: Bool
-*> parseJust constExprGen0 "h: $i"
+*> parseJust constExprGen0 "h: \$i"
 h :: Int
-*> parseJust constExprGen0 "h: $o < $o"
+*> parseJust constExprGen0 "h: \$o < \$o"
 h :: Bool -> Bool
-*> parseJust constExprGen0 "h: $i < $o"
+*> parseJust constExprGen0 "h: \$i < \$o"
 h :: Int -> Bool
-*> parseJust constExprGen0 "h: $o < $i"
+*> parseJust constExprGen0 "h: \$o < \$i"
 h :: Bool -> Int
 
-*> parseJust constExpr "h: $o" :: HOLConst (Bool) ()
+*> parseJust constExpr "h: \$o" :: HOLConst () (Bool)
 h :: Bool
-*> parseJust constExpr "h: $o < $o" :: HOLConst (Bool -> Bool) ()
+*> parseJust constExpr "h: \$o < \$o" :: HOLConst () (Bool -> Bool)
 h :: Bool -> Bool
 
-*> parseJust constExpr "h: $o < $o" :: HOLConst Bool ()
+*> parseJust constExpr "h: \$o < \$o" :: HOLConst () Bool
 *** Exception: 1:11:
   |
-1 | h: $o < $o
+1 | h: \$o < \$o
   |           ^
 "type missmatch"
+\end{terminal}
 
 \begin{code}
 {-# LANGUAGE ViewPatterns, RankNTypes, TypeFamilies #-}
@@ -34,7 +36,7 @@ module Logic.TPTP.THF.ConstParser
 
 , HOLConst(..)
 , HOLTerm(..)
-, SomeHOLFormulae(..)
+, SomeHOLConst(..)
 ) where
 
 import Logic.HOL
@@ -61,22 +63,25 @@ TODO generalize this implementation or find a better one
 TODO replace this crazy (show -> ..) pattern
 
 inspired by
-  convert :: SomeTypeRep -> String -> Maybe Dynamic
-  convert (SomeTypeRep rep) s
-    | Just HRefl <- eqTypeRep rep (typeRep @String) = Just $ toDynamic s 
+\begin{code}% example
+convert :: SomeTypeRep -> String -> Maybe Dynamic
+convert (SomeTypeRep rep) s
+  | Just HRefl <- eqTypeRep rep (typeRep @String) = Just $ toDynamic s 
+\end{code}% example
 @see https://stackoverflow.com/questions/46992740/how-to-specify-type-of-value-via-typerep/46993294#46993294
+
 \begin{code}
-constantGen :: Typeable u => TypeRep -> String -> SomeHOLFormulae u
+constantGen :: Typeable u => TypeRep -> String -> SomeHOLConst u
 constantGen typeRep name = case typeRep of
-  (show -> "Bool") -> gen (constant name :: Typeable u => HOLConst (Bool) u)
-  (show -> "Int") -> gen (constant name :: Typeable u => HOLConst (Int) u)
-  (show -> "Bool -> Bool") -> gen (constant name :: Typeable u => HOLConst (Bool -> Bool) u)
-  (show -> "Int -> Bool") -> gen (constant name :: Typeable u => HOLConst (Int -> Bool) u)
-  (show -> "Bool -> Int") -> gen (constant name :: Typeable u => HOLConst (Bool -> Int) u)
+  (show -> "Bool") -> gen (constant name :: Typeable u => HOLConst u (Bool))
+  (show -> "Int") -> gen (constant name :: Typeable u => HOLConst u (Int))
+  (show -> "Bool -> Bool") -> gen (constant name :: Typeable u => HOLConst u (Bool -> Bool))
+  (show -> "Int -> Bool") -> gen (constant name :: Typeable u => HOLConst u (Int -> Bool))
+  (show -> "Bool -> Int") -> gen (constant name :: Typeable u => HOLConst u (Bool -> Int))
 \end{code}
 
 \begin{code}
-constExprGen :: (Typeable u) => Parser (SomeHOLFormulae u)
+constExprGen :: (Typeable u) => Parser (SomeHOLConst u)
 constExprGen = do
   name <- identifier
   symbol ":"
@@ -86,20 +91,20 @@ constExprGen = do
   return $ c
 
 -- TODO add better error message
-constExpr :: (Typeable t, Typeable u) => Parser (HOLConst t u)
+constExpr :: (Typeable t, Typeable u) => Parser (HOLConst u t)
 constExpr = do
   c <- constExprGen
   case unGen c of
     Just c' -> return c'
     _       -> textError "type missmatch"
 
-constExprGen0 :: Parser (SomeHOLFormulae ())
+constExprGen0 :: Parser (SomeHOLConst ())
 constExprGen0 = constExprGen
 
 \end{code}
 old:
 
-constExpr :: (Typeable t, Typeable u) => Parser (HOLConst t u)
+constExpr :: (Typeable t, Typeable u) => Parser (HOLConst u t)
 constExpr = do
   name <- identifier
   symbol ":"

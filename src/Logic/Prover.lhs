@@ -10,8 +10,8 @@ module Logic.Prover
 import Logic.Prover.SZSStatus
 
 class Prover p where
-  type ProveFormulae p
+  type ProveConst p
   type ProveConjecture p
 
-  validP :: p -> [ProveFormulae p] -> ProveConjecture p -> IO SZSStatus
+  validP :: p -> [ProveConst p] -> ProveConjecture p -> IO SZSStatus
 \end{code}

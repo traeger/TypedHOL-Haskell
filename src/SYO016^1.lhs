@@ -55,13 +55,13 @@ import Prelude hiding (not, forall, exists)
 
 leibeq =
   let
-    x = var "x" :: HOLVar (Bool) ()
-    y = var "y" :: HOLVar (Bool) ()
-    p = var "p" -- :: HOLVar (Bool -> Bool) () <- autoderived
+    x = var "x" :: HOLVar () Bool
+    y = var "y" :: HOLVar () Bool
+    p = var "p" -- :: HOLVar () (Bool -> Bool) <- autoderived
   in
     definition "leibeq" $ lam x $ lam y $ forall p $ p .@ x .-> p .@ y
 
-h = constant "h" :: HOLConst (Bool -> Bool) ()
+h = constant "h" :: HOLConst () (Bool -> Bool)
 conjecture = leibeq .@ ( h .@ ( leibeq .@ ( h .@ T ) .@ ( h .@ F ) ) ) .@ ( h .@ F )
 
 formulae = 
