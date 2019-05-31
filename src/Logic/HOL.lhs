@@ -11,7 +11,7 @@ module Logic.HOL (
   not, forall, exists, app, lam, definition,
   (.->), (.|), (.&), (.@),
   name, def,
-  SomeHOLFormulae(..), gen,
+  SomeHOLFormulae(..), gen, unGen,
   pretty, prettyTyped,
 ) where
 
@@ -184,6 +184,9 @@ data SomeHOLFormulae u where
   SomeHOLFormulae :: (Typeable t) => !(HOLConst t u) -> SomeHOLFormulae u
 gen :: (Typeable t) => (HOLConst t u) -> SomeHOLFormulae u
 gen = SomeHOLFormulae
+
+unGen :: (Typeable t, Typeable u) => SomeHOLFormulae u -> Maybe (HOLConst t u)
+unGen (SomeHOLFormulae f) = cast f
 
 instance (Typeable u) => Pretty (SomeHOLFormulae u) where
   pretty (SomeHOLFormulae x) = pretty x

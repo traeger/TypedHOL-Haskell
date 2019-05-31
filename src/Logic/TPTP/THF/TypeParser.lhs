@@ -1,4 +1,10 @@
-Experimental, not working at all.
+\section{Parser for Types}
+
+\subsection{Usage}
+*Logic.TPTP.THF.Parser> parseJust typeExpr "$o"
+Bool
+*Logic.TPTP.THF.Parser> parseJust typeExpr "$o < $o"
+Bool -> Bool
 
 \begin{code}
 module Logic.TPTP.THF.TypeParser 
