@@ -1,6 +1,6 @@
 
 \begin{code}
-{-# LANGUAGE GADTs, TypeFamilies #-}
+{-# LANGUAGE GADTs, TypeFamilies, FlexibleContexts, ScopedTypeVariables, AllowAmbiguousTypes #-}
 
 module Logic.HOL.Some where
 
@@ -12,8 +12,8 @@ import Data.Text.Prettyprint.Doc
 
 class Some s where
   type Something s
-  gen :: (Typeable t) => (s t) -> Something s
-  unGen :: (Typeable t) => Something s -> Maybe (s t)
+  gen :: s -> Something s
+  unGen :: Something s -> Maybe s
 \end{code}
 
 Helper to generete List over multible types. Allows:
@@ -35,8 +35,8 @@ instance (Typeable u) => PrettyTyped (SomeHOLConst u) where
 instance (Typeable u) => Show (SomeHOLConst u) where
   show = show . prettyTyped
 
-instance Typeable u => Some (HOLConst u) where
-  type Something (HOLConst u) = SomeHOLConst u
+instance (Typeable u, Typeable t) => Some (HOLConst u t) where
+  type Something (HOLConst u t) = SomeHOLConst u
   gen = SomeHOLConst
   unGen (SomeHOLConst f) = cast f
 \end{code}
@@ -52,8 +52,8 @@ instance (Typeable u) => PrettyTyped (SomeHOLVar u) where
 instance (Typeable t) => Show (SomeHOLVar t) where
   show = show . prettyTyped
 
-instance Typeable u => Some (HOLVar u) where
-  type Something (HOLVar u) = SomeHOLVar u
+instance (Typeable u, Typeable t) => Some (HOLVar u t) where
+  type Something (HOLVar u t) = SomeHOLVar u
   gen = SomeHOLVar
   unGen (SomeHOLVar f) = cast f
 \end{code}
@@ -69,8 +69,23 @@ instance (Typeable u) => PrettyTyped (SomeHOLTerm u) where
 instance (Typeable t) => Show (SomeHOLTerm t) where
   show = show . prettyTyped
 
-instance Typeable u => Some (HOLTerm u) where
-  type Something (HOLTerm u) = SomeHOLTerm u
+instance (Typeable u, Typeable t) => Some (HOLTerm u t) where
+  type Something (HOLTerm u t) = SomeHOLTerm u
   gen = SomeHOLTerm
   unGen (SomeHOLTerm f) = cast f
+\end{code}
+
+\subsection{construction of terms of some wrapped typed}
+\begin{code}
+infixl 4 ..->
+
+(..->) :: forall u. Typeable u => SomeHOLTerm u -> SomeHOLTerm u -> Maybe (SomeHOLTerm u)
+a ..-> b = case (unGen a :: Maybe (HOLTerm u Bool), unGen b :: Maybe (HOLTerm u Bool)) of
+  (Just a', Just b') -> Just $ gen $ (a' .-> b')
+  _ -> Nothing
+
+(..@) :: forall u t s. (Typeable u, Typeable t, Typeable s) => SomeHOLTerm u -> SomeHOLTerm u -> Maybe (SomeHOLTerm u)
+f ..@ x = case (unGen f, unGen x) :: (Maybe (HOLTerm u (s -> t)), Maybe (HOLTerm u s)) of
+  (Just f', Just x') -> Just $ gen $ f' .@ x'
+  _ -> Nothing
 \end{code}
