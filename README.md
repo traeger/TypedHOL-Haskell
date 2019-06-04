@@ -146,3 +146,15 @@ Call leo3 to prove the conjecture given the formulae
 
 Theorem
 ```
+
+## THF Parser
+### parse an TPTP-THF file
+```
+*> parseFile abstractTHFFile "../TPTP/SYO016^1.p"
+AbstractTHFFile 
+[ AbstractTHFType "leibeq_decl" "( leibeq: $o > $o > $o )"
+, AbstractTHFDefinition "leibeq" "( leibeq = ( ^ [X: $o,Y: $o] : ! [P: $o > $o] : ( ( P @ X ) => ( P @ Y ) ) ) )"
+, AbstractTHFType "h" "( h: $o > $o )"
+, AbstractTHFConjecture "conj" "( leibeq @ ( h @ ( leibeq @ ( h @ $true ) @ ( h @ $false ) ) ) @ ( h @ $false ) )"
+]
+```

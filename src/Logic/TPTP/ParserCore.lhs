@@ -53,7 +53,10 @@ listElements = between (symbol "[") (symbol "]") . ((flip sepBy) (symbol ","))
 --   textError "hallo"
 textError :: String -> ParserT s a
 textError err = fancyFailure (Set.fromList $ [ErrorFail $ show $ err])
+\end{code}
 
+\subsection{Parser Styles}
+\begin{code}
 parseJust :: Show a => Parser a -> String -> a
 parseJust parser s = 
   case MP.runParser (between sc eof parser) "" s of
@@ -67,6 +70,24 @@ parseFile :: Show a => Parser a -> FilePath -> IO a
 parseFile parser file = do
   content <- readFile file
   return $ parseJust parser content
+\end{code}
+
+\subsection{TPTP Whitespace normalisation}
+Removes unnessary whitespaces
+\begin{code}
+normalizeTPTPSpaces :: String -> String
+normalizeTPTPSpaces [] = []
+normalizeTPTPSpaces (x:xs) = 
+  if isTPTPSpace x 
+  then ((:) ' ' $ normalizeTPTPSpaces $ dropWhile isTPTPSpace xs) 
+  else ((:) x $ (normalizeTPTPSpaces xs))
+
+isTPTPSpace :: Char -> Bool
+isTPTPSpace ' ' = True
+isTPTPSpace '\n' = True
+isTPTPSpace '\t' = True
+isTPTPSpace '\r' = True
+isTPTPSpace _ = False
 
 \end{code}
 MP.runParser

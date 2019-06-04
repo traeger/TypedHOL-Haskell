@@ -25,7 +25,7 @@ abstractTHFFormulae = do
     symbol ","
     formulaeType <- identifier
     symbol ","
-    definition <- manyTill anySingle (symbol ").")
+    definition <- normalizeTPTPSpaces <$> manyTill anySingle (symbol ").")
     case formulaeType of
       "type" ->       return $ AbstractTHFType name definition
       "definition" -> return $ AbstractTHFDefinition name definition
