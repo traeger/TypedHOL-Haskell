@@ -54,10 +54,11 @@ data HOLTerm u t where
   And :: Typeable u => HOLTerm u Bool -> HOLTerm u Bool -> HOLTerm u Bool
   Or :: Typeable u => HOLTerm u Bool -> HOLTerm u Bool -> HOLTerm u Bool
   Imply :: Typeable u => HOLTerm u Bool -> HOLTerm u Bool -> HOLTerm u Bool
-  Lam :: (Typeable s, Typeable t, Typeable u) => HOLVar u s -> HOLTerm u t -> HOLTerm u (s -> t)
   App :: (Typeable s, Typeable t, Typeable u) => HOLTerm u (s -> t) -> HOLTerm u s -> HOLTerm u t
+  Lam :: (Typeable s, Typeable t, Typeable u) => HOLVar u s -> HOLTerm u t -> HOLTerm u (s -> t)
   Forall :: (Typeable s, Typeable u) => HOLVar u s -> HOLTerm u Bool -> HOLTerm u Bool
   Exists :: (Typeable s, Typeable u) => HOLVar u s -> HOLTerm u Bool -> HOLTerm u Bool
+  Equal :: (Typeable t, Typeable u) => HOLTerm u t -> HOLTerm u t -> HOLTerm u Bool
 
 instance Pretty (HOLVar u t) where
   pretty (HOLVar x) = pretty x
@@ -93,6 +94,7 @@ instance Pretty (HOLTerm u t) where
     (App f x) -> parens $ pretty f <> pretty "@" <> pretty x
     (Forall x f) -> pretty "∀" <> pretty x <> pretty ":" <+> pretty f 
     (Exists x f) -> pretty "∃" <> pretty x <> pretty ":" <+> pretty f
+    (Equal x y) -> pretty x <> pretty "=" <> pretty y
 
 instance (Typeable t, Typeable u) => PrettyTyped (HOLTerm u t) where
   prettyTyped x = pretty x <+> pretty "::" <+> (pretty $ show $ getHOLType x)
@@ -124,10 +126,11 @@ type HOL a u t = (ToHOL a u t, FromHOL a u t)
 
 Shorthands for construction or terms.
 \begin{code}
-infixl 4 .->
-infixl 5 .|
-infixl 6 .&
+infixl 8 .=
 infixl 7 .@
+infixl 6 .&
+infixl 5 .|
+infixl 4 .->
 
 var :: (Typeable t, Typeable u) => String -> HOLVar u t
 var = HOLVar
@@ -144,6 +147,7 @@ lam v a = Lam v (toHOL a)
 forall x f = Forall x (toHOL f)
 exists x f = Exists x (toHOL f)
 definition s f = HOLDef s f
+x .= y = Equal (toHOL x) (toHOL y)
 
 \end{code}
 

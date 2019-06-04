@@ -31,8 +31,7 @@ h :: Bool -> Bool
 
 module Logic.TPTP.THF.ConstParser 
 ( constExpr
-, constExprGen
-, constExprGen0
+, constExpr0
 
 , HOLConst(..)
 , HOLTerm(..)
@@ -81,8 +80,8 @@ constantGen typeRep name = case typeRep of
 \end{code}
 
 \begin{code}
-constExprGen :: (Typeable u) => Parser (SomeHOLConst u)
-constExprGen = do
+constExpr :: (Typeable u) => Parser (SomeHOLConst u)
+constExpr = do
   name <- identifier
   symbol ":"
   typeFound <- typeExpr
@@ -91,15 +90,15 @@ constExprGen = do
   return $ c
 
 -- TODO add better error message
-constExpr :: (Typeable t, Typeable u) => Parser (HOLConst u t)
-constExpr = do
-  c <- constExprGen
-  case unGen c of
-    Just c' -> return c'
-    _       -> textError "type missmatch"
+-- constExpr :: (Typeable t, Typeable u) => Parser (HOLConst u t)
+-- constExpr = do
+--   c <- constExprGen
+--   case unGen c of
+--     Just c' -> return c'
+--     _       -> textError "type missmatch"
 
-constExprGen0 :: Parser (SomeHOLConst ())
-constExprGen0 = constExprGen
+constExpr0 :: Parser (SomeHOLConst ())
+constExpr0 = constExpr
 
 \end{code}
 old:
