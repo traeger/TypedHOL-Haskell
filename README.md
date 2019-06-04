@@ -150,7 +150,8 @@ Theorem
 ## THF Parser
 ### parse an TPTP-THF file
 ```
-*> parseFile abstractTHFFile "../TPTP/SYO016^1.p"
+$ ghci Logic/TPTP/THF/AST.lhs
+*Logic.TPTP.THF.AST> parseFile abstractTHFFile "../TPTP/SYO016^1.p"
 AbstractTHFFile 
 [ AbstractTHFType "leibeq_decl" "( leibeq: $o > $o > $o )"
 , AbstractTHFDefinition "leibeq" "( leibeq = ( ^ [X: $o,Y: $o] : ! [P: $o > $o] : ( ( P @ X ) => ( P @ Y ) ) ) )"
