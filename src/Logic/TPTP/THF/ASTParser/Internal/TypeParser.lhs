@@ -2,20 +2,20 @@
 
 \subsection{Usage}
 \begin{terminal}
-*Logic.TPTP.THF.Parser> parseJust typeExpr "\$o"
-*Logic.TPTP.THF.Parser> parseJust typeExpr "\$o < \$o"
-*Logic.TPTP.THF.Parser> parseJust typeExpr "\$o < \$o < \$o"
-*Logic.TPTP.THF.Parser> parseJust typeExpr "(\$o < \$o) < \$o"
-*Logic.TPTP.THF.Parser> parseJust typeExpr "\$o < (\$o < \$o)"
+*Logic.TPTP.THF.Parser> parseJust typeParser "\$o"
+*Logic.TPTP.THF.Parser> parseJust typeParser "\$o < \$o"
+*Logic.TPTP.THF.Parser> parseJust typeParser "\$o < \$o < \$o"
+*Logic.TPTP.THF.Parser> parseJust typeParser "(\$o < \$o) < \$o"
+*Logic.TPTP.THF.Parser> parseJust typeParser "\$o < (\$o < \$o)"
 \end{terminal}
 
 \begin{code}
-module Logic.TPTP.THF.AST.Internal.TypeParser where
+module Logic.TPTP.THF.ASTParser.Internal.TypeParser where
 
 import Logic.HOL
 
 import Logic.TPTP.ParserCore
-import Logic.TPTP.THF.AST.Internal
+import Logic.TPTP.THF.AST
 
 import Text.Megaparsec
 import Control.Monad.Combinators.Expr
@@ -29,11 +29,11 @@ Parse a THF type. Examples are:
   \item $\$b < \$i < \$b$
 \end{itemize}
 \begin{code}
-typeExpr :: Parser HOLType
-typeExpr = makeExprParser typeTerm typeOperators
+typeParser :: Parser HOLType
+typeParser = makeExprParser typeTerm typeOperators
 
 typeTerm :: Parser HOLType
-typeTerm = parens typeExpr
+typeTerm = parens typeParser
   <|> (HOLBaseType "o") <$ rword "$o"
   <|> (HOLBaseType "i") <$ rword "$i" 
   -- we use int for now, since the $i type is not used in any specific why 

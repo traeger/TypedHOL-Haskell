@@ -6,10 +6,10 @@ Parse a thf formulae without parsing the actual definition part.
 \end{terminal}
 
 \begin{code}
-module Logic.TPTP.THF.AST.Internal.AbstractTHFFormulaeParser where
+module Logic.TPTP.THF.ASTParser.Internal.AbstractTHFFormulaeParser where
 
 import Logic.TPTP.ParserCore
-import Logic.TPTP.THF.AST.Internal
+import Logic.TPTP.THF.AST
 
 import Control.Monad
 import Text.Megaparsec
@@ -18,8 +18,8 @@ import Control.Monad.Combinators
 \end{code}
 
 \begin{code}
-abstractTHFFormulae :: Parser AbstractTHFFormulae
-abstractTHFFormulae = do
+abstractTHFParser :: Parser (Either AbstractTHFType AbstractTHFFormulae)
+abstractTHFParser = do
     symbol "thf("
     name <- identifier
     symbol ","
@@ -27,7 +27,8 @@ abstractTHFFormulae = do
     symbol ","
     definition <- normalizeTPTPSpaces <$> manyTill anySingle (symbol ").")
     case formulaeType of
-      "type" ->       return $ AbstractTHFType name definition
-      "definition" -> return $ AbstractTHFDefinition name definition
-      "conjecture" -> return $ AbstractTHFConjecture name definition
+      "type" ->       return $ Left $ AbstractTHFType name definition
+      "axiom" ->      return $ Right $ AbstractTHFAxiom name definition
+      "definition" -> return $ Right $ AbstractTHFDefinition name definition
+      "conjecture" -> return $ Right $ AbstractTHFConjecture name definition
 \end{code}

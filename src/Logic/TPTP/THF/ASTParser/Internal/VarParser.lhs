@@ -2,11 +2,11 @@
 
 \subsection{Usage}
 \begin{code}
-module Logic.TPTP.THF.AST.Internal.VarParser where
+module Logic.TPTP.THF.ASTParser.Internal.VarParser where
 
 import Logic.TPTP.ParserCore
-import Logic.TPTP.THF.AST.Internal
-import Logic.TPTP.THF.AST.Internal.TypeParser
+import Logic.TPTP.THF.AST
+import Logic.TPTP.THF.ASTParser.Internal.TypeParser
 
 import Control.Monad
 import Text.Megaparsec
@@ -25,15 +25,15 @@ Parse a THF var. Examples are:
   \item $G: \$b < \$i < \$b$
 \end{itemize}
 \begin{code}
-varExpr :: Parser HOLVar
-varExpr = do
+varParser :: Parser HOLVar
+varParser = do
   name <- varIdentifier
   symbol ":"
-  typeFound <- typeExpr
+  typeFound <- typeParser
   
   return $ HOLVar typeFound name
 
-varsExpr :: Parser [HOLVar]
-varsExpr = listElements varExpr
+varsParser :: Parser [HOLVar]
+varsParser = listElements varParser
 \end{code}
 

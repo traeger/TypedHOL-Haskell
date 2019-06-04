@@ -10,11 +10,11 @@
 \end{terminal}
 
 \begin{code}
-module Logic.TPTP.THF.AST.Internal.ConstParser where
+module Logic.TPTP.THF.ASTParser.Internal.ConstParser where
 
 import Logic.TPTP.ParserCore
-import Logic.TPTP.THF.AST.Internal
-import Logic.TPTP.THF.AST.Internal.TypeParser
+import Logic.TPTP.THF.AST
+import Logic.TPTP.THF.ASTParser.Internal.TypeParser
 
 import Control.Monad
 import Text.Megaparsec
@@ -30,11 +30,11 @@ Parse a THF constant declaration. Examples are:
 \end{itemize}
 
 \begin{code}
-constExpr :: Parser HOLConst
-constExpr = do
+constParser :: Parser HOLConst
+constParser = do
   name <- constIdentifier
   symbol ":"
-  typeFound <- typeExpr
+  typeFound <- typeParser
   
   return $ HOLConst typeFound name
 \end{code}
