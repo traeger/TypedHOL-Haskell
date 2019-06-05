@@ -3,10 +3,10 @@
 \subsection{Usage}
 \begin{terminal}
 *Logic.TPTP.THF.Parser> parseJust typeParser "\$o"
-*Logic.TPTP.THF.Parser> parseJust typeParser "\$o < \$o"
-*Logic.TPTP.THF.Parser> parseJust typeParser "\$o < \$o < \$o"
-*Logic.TPTP.THF.Parser> parseJust typeParser "(\$o < \$o) < \$o"
-*Logic.TPTP.THF.Parser> parseJust typeParser "\$o < (\$o < \$o)"
+*Logic.TPTP.THF.Parser> parseJust typeParser "\$o > \$o"
+*Logic.TPTP.THF.Parser> parseJust typeParser "\$o > \$o > \$o"
+*Logic.TPTP.THF.Parser> parseJust typeParser "(\$o > \$o) > \$o"
+*Logic.TPTP.THF.Parser> parseJust typeParser "\$o > (\$o > \$o)"
 \end{terminal}
 
 \begin{code}
@@ -25,21 +25,21 @@ Parse a THF type. Examples are:
 \begin{itemize}
   \item $\$i$
   \item $\$o$
-  \item $\$b < \$b$
-  \item $\$b < \$i < \$b$
+  \item $\$b > \$b$
+  \item $\$b > \$i > \$b$
 \end{itemize}
 \begin{code}
-typeParser :: Parser HOLType
+typeParser :: Parser THFType 
 typeParser = makeExprParser typeTerm typeOperators
 
-typeTerm :: Parser HOLType
+typeTerm :: Parser THFType
 typeTerm = parens typeParser
-  <|> (HOLBaseType "o") <$ rword "$o"
-  <|> (HOLBaseType "i") <$ rword "$i" 
+  <|> (THFBaseType "o") <$ rword "$o"
+  <|> (THFBaseType "i") <$ rword "$i" 
   -- we use int for now, since the $i type is not used in any specific why 
 
-typeOperators :: [[Operator Parser HOLType]]
+typeOperators :: [[Operator Parser THFType]]
 typeOperators =
-  [ [ InfixL $ HOLFuncType <$ symbol "<" ]
+  [ [ InfixL $ THFFuncType <$ symbol ">" ]
   ]
 \end{code}

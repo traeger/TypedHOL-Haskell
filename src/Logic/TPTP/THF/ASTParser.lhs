@@ -10,6 +10,8 @@ module Logic.TPTP.THF.ASTParser
 
 , abstractTHFParser
 , abstractTHFFileParser
+
+, step1, step2
 ) where
 
 import Logic.TPTP.ParserCore
@@ -23,16 +25,18 @@ import Logic.TPTP.THF.ASTParser.Internal.TermParser
 import Logic.TPTP.THF.ASTParser.Internal.AbstractTHFFormulaeParser
 import Logic.TPTP.THF.ASTParser.Internal.AbstractTHFFileParser
 
+import Logic.TPTP.THF.ASTParser.Internal.THFFileParser
+
 import Data.Map as Map
 
-termParserRaw :: Parser HOLTerm
+termParserRaw :: Parser (THFTerm ())
 termParserRaw = termParser undefined
 
-termParserTest :: Parser HOLTerm
+termParserTest :: Parser (THFTerm ())
 termParserTest = termParser consts
 
-a = HOLConst (HOLBaseType "o") "a"
-h = HOLConst (HOLFuncType (HOLBaseType "o") (HOLBaseType "o")) "h"
+a = THFConst () (THFBaseType "o") "a"
+h = THFConst () (THFFuncType (THFBaseType "o") (THFBaseType "o")) "h"
 
 consts
   = insertConst a

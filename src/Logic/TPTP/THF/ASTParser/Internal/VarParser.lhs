@@ -25,15 +25,15 @@ Parse a THF var. Examples are:
   \item $G: \$b < \$i < \$b$
 \end{itemize}
 \begin{code}
-varParser :: Parser HOLVar
+varParser :: Parser (THFVar ())
 varParser = do
   name <- varIdentifier
   symbol ":"
   typeFound <- typeParser
   
-  return $ HOLVar typeFound name
+  return $ THFVar () typeFound name
 
-varsParser :: Parser [HOLVar]
+varsParser :: Parser [THFVar ()]
 varsParser = listElements varParser
 \end{code}
 

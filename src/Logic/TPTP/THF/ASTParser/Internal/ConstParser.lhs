@@ -25,16 +25,19 @@ Parse a THF constant declaration. Examples are:
 \begin{itemize}
   \item $x: \$i$
   \item $b: \$o$
-  \item $f: \$b < \$b$
-  \item $g: \$b < \$i < \$b$
+  \item $f: \$b > \$b$
+  \item $g: \$b > \$i > \$b$
 \end{itemize}
 
 \begin{code}
-constParser :: Parser HOLConst
-constParser = do
+constParser :: Parser (THFConst ())
+constParser = parens constParser' <|> constParser'
+
+constParser' :: Parser (THFConst ())
+constParser' = do
   name <- constIdentifier
   symbol ":"
   typeFound <- typeParser
   
-  return $ HOLConst typeFound name
+  return $ THFConst () typeFound name
 \end{code}
